@@ -1,0 +1,18 @@
+[package]
+name = "cliargs"
+version = "0.1.0"
+authors = ["Takayuki Sato <sttk.xslet@gmail.com>"]
+edition = "2021"
+rust-version = "1.67.1"
+description = "Parses command line arguments and prints the help."
+documentation = "https://docs.rs/cliargs"
+readme = "README.md"
+repository = "https://github.com/sttk/cliargs-rust"
+license = "MIT"
+keywords = ["cli", "arg", "argument", "command", "parse"]
+categories = ["command-line interface"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+linebreak = "0.2.0"
