@@ -24,17 +24,80 @@ cliargs = "0.1.0"
 
 ## Usage
 
-### Parse without configurations
+This crate provides the `Cmd` struct to parse command line arguments.
+The usage of this `Cmd` struct is as follows:
 
+### Creates a `Cmd` instance
 
-### Parse with configurations
+The `Cmd::new` function  creates a `Cmd` instance with original command line arguments.
+This function uses `std::env::args_os` and `OsString#into_string` to read command line arguments in order to avoid `panic!` call that the user cannot control.
 
+```
+use cliargs::Cmd;
 
-### Parse for a option store
+let cmd = match Cmd::new() {
+    Ok(cmd) => cmd,
+    Err(cliargs::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
+        panic!("Invalid Unicode data: {os_arg} (index: {index})");
+    }
+};
+```
 
+### Creates a `Cmd` instance with the specified `String` array
 
-### Parse command line arguments including sub commands
+The `Cmd::with_strings` function creates a `Cmd` instance with the specified `String` array.
 
+```
+use cliargs::Cmd;
+use std::env;
+
+let cmd = Cmd::with_strings(env::args());
+```
+
+### Creates a `Cmd` instance with the specified `OsString` array
+
+The `Cmd::with_os_strings` function creates a `Cmd` instance with the specified `OsString` array.
+
+```
+use cliargs::Cmd;
+use std::env;
+
+let cmd = match Cmd::with_os_strings(env::args_os()) {
+    Ok(cmd) => cmd,
+    Err(cliargs::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
+        panic!("Invalid Unicode data: {os_arg} (index: {index})");
+    }
+};
+```
+
+### Parses without configurations
+
+The `Cmd` struct has the method which parses command line arguments without configurations.
+This function automatically divides command line arguments to options and command arguments.
+
+Command line arguments starts with `-` or `--` are options, and others are command arguments.
+If you want to specify a value to an option, follows `"="` and the value after the option, like `foo=123`.
+
+All command line arguments after `--` are command arguments, even they starts with `-` or `--`.
+
+```
+use cliargs::Cmd;
+
+let cmd = Cmd::with_strings(vec![
+    "path/to/app", "--foo-bar", "hoge", "--baz", "1", "-z=2", "-xyz=3", "fuga"
+]);
+
+match cmd.parse() {
+    Ok(_) => {},
+    Err(cliargs::Error::InvalidOption(err)) => {
+        match err {
+            cliargs::Error::OptionContainsInvalidChar{ option } => { ... }
+            _ => {}
+        }
+        panic!("The option: {} is invalid.", err.option());
+    }
+}
+```
 
 ## Supporting Rust versions
 
