@@ -3,6 +3,7 @@
 // See the file LICENSE in this distribution for more details.
 
 mod errors;
+mod parse;
 
 use std::collections::HashMap;
 use std::env;
