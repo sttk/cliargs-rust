@@ -38,11 +38,14 @@ cliargs = "0.1.0"
 
 ## Supporting Rust versions
 
-This crate supports Rust 1.67.1 or later.
+This crate supports Rust 1.74.1 or later.
 
 ```
-% cargo msrv
-
+% cargo msrv --no-check-feedback
+Fetching index
+Determining the Minimum Supported Rust Version (MSRV) for toolchain x86_64-apple-darwin
+Using check command cargo check
+   Finished The MSRV is: 1.74.1   █████████████████████████████████████ 00:00:02
 ```
 
 
