@@ -8,10 +8,10 @@ This library provides the following functionalities:
     - This library supports `--` option.
     - This library doesn't support numeric short option.
     - This library supports not `-ofoo` but `-o=foo` as an alternative to `-o foo` for short option.
-- Supports parsing with option configurations.
-- Supports parsing with an object which stores option values and has annotations of fields.
-- Is able to parse command line arguments including sub commands.
-- Generates help text from option configurations.
+- Supports parsing with option configurations. *(To be added)*
+- Supports parsing with an object which stores option values and has annotations of fields. *(To be added)*
+- Is able to parse command line arguments including sub commands. *(To be added)*
+- Generates help text from option configurations. *(To be added)*
 
 ## Install
 
@@ -19,7 +19,7 @@ In `Cargo.toml`, write this crate as a dependency.
 
 ```toml
 [dependencies]
-cliargs = "0.1.0"
+cliargs = "0.0.0"
 ```
 
 ## Usage
@@ -121,7 +121,7 @@ See the file LICENSE in this distribution for more details.
 
 
 [repo-url]: https://github.com/sttk/cliargs-rust
-[crateio-img]: https://img.shields.io/badge/crate.io-ver.0.1.0-fc8d62?logo=rust
+[crateio-img]: https://img.shields.io/badge/crate.io-ver.0.0.0-fc8d62?logo=rust
 [crateio-url]: https://crates.io/crates/cliargs
 [docrs-img]: https://img.shields.io/badge/doc.rs-cliargs-66c2a5?logo=docs.rs
 [docrs-url]: https://docs.rs/cliargs
@@ -129,3 +129,6 @@ See the file LICENSE in this distribution for more details.
 [ci-url]: https://github.com/sttk/cliargs-rust/actions
 [mit-img]: https://img.shields.io/badge/license-MIT-green.svg
 [mit-url]: https://opensource.org/licenses/MIT
+
+[posix-args]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
+[gnu-args]: https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html
