@@ -316,6 +316,7 @@ mod tests_of_cmd {
             assert_eq!(cmd.name(), "app");
         }
 
+        #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
         #[test]
         fn should_fail_because_os_args_contain_invalid_unicode() {
             let bad_arg = b"bar\xFFbaz";
@@ -337,6 +338,7 @@ mod tests_of_cmd {
             }
         }
 
+        #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
         #[test]
         fn should_fail_because_command_name_contains_invalid_unicode() {
             let bad_arg = b"bar\xFFbaz";

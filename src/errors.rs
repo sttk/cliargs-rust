@@ -284,6 +284,7 @@ impl cmp::PartialEq for ParseError<'_> {
 #[cfg(test)]
 mod tests_of_cliargs_error {
 
+    #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
     mod tests_of_os_args_contain_invalid_unicode {
         use crate::Error;
         use std::error;

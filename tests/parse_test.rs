@@ -69,6 +69,7 @@ mod tests_of_errors {
     use cliargs;
     use std::ffi;
 
+    #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
     #[test]
     fn it_should_parse_but_fail_because_command_line_arguments_contain_invalid_unicode() {
         let bad_arg = b"bar\xFF";
