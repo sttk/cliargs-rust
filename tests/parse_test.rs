@@ -88,7 +88,6 @@ mod tests_of_errors {
                 assert_eq!(index, 2);
                 assert_eq!(os_arg, bad_os_string);
             }
-            Err(_) => assert!(false),
         }
     }
 

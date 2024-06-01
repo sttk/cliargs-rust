@@ -15,11 +15,11 @@ impl fmt::Display for InvalidOsArg {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         match self {
             InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg } => write!(
-        f,
-        "The command line arguments contains invalid unicode (index: {}, arguments: \"{}\")",
-        index,
-        String::from_utf8_lossy(os_arg.as_encoded_bytes()).escape_debug(),
-      ),
+                f,
+                "The command line arguments contains invalid unicode (index: {}, arguments: \"{}\")",
+                index,
+                String::from_utf8_lossy(os_arg.as_encoded_bytes()).escape_debug(),
+            ),
         }
     }
 }
