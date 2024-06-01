@@ -3,11 +3,11 @@
 // See the file LICENSE in this distribution for more details.
 
 use super::parse_args;
+use crate::errors::InvalidOption;
 use crate::Cmd;
-use crate::Error;
 
 impl<'a> Cmd<'a> {
-    pub fn parse(&mut self) -> Result<(), Error<'a>> {
+    pub fn parse(&mut self) -> Result<(), InvalidOption> {
         let collect_args = |arg| {
             self.args.push(arg);
         };
@@ -17,7 +17,7 @@ impl<'a> Cmd<'a> {
             if let Some(arg) = option {
                 vec.push(arg);
             }
-            Ok::<(), Error<'a>>(())
+            Ok(())
         };
 
         let take_args = |_arg: &str| false;
@@ -35,7 +35,8 @@ impl<'a> Cmd<'a> {
 
 #[cfg(test)]
 mod tests_of_cmd {
-    use crate::{Cmd, Error, OptionError};
+    use crate::errors::InvalidOption;
+    use crate::Cmd;
 
     mod tests_of_parse {
         use super::*;
@@ -306,7 +307,7 @@ mod tests_of_cmd {
             ]);
             match cmd.parse() {
                 Ok(_) => assert!(false),
-                Err(Error::InvalidOption(OptionError::OptionContainsInvalidChar { option })) => {
+                Err(InvalidOption::OptionContainsInvalidChar { option }) => {
                     assert_eq!(option, "abc%def");
                 }
                 Err(_) => assert!(false),
@@ -333,7 +334,7 @@ mod tests_of_cmd {
             let mut cmd = Cmd::with_strings(["app".to_string(), "--1abc".to_string()]);
             match cmd.parse() {
                 Ok(_) => assert!(false),
-                Err(Error::InvalidOption(OptionError::OptionContainsInvalidChar { option })) => {
+                Err(InvalidOption::OptionContainsInvalidChar { option }) => {
                     assert_eq!(option, "1abc");
                 }
                 Err(_) => assert!(false),
@@ -360,7 +361,7 @@ mod tests_of_cmd {
             let mut cmd = Cmd::with_strings(["app".to_string(), "---aaa=123".to_string()]);
             match cmd.parse() {
                 Ok(_) => assert!(false),
-                Err(Error::InvalidOption(OptionError::OptionContainsInvalidChar { option })) => {
+                Err(InvalidOption::OptionContainsInvalidChar { option }) => {
                     assert_eq!(option, "-aaa=123");
                 }
                 Err(_) => assert!(false),
@@ -392,7 +393,7 @@ mod tests_of_cmd {
             ]);
             match cmd.parse() {
                 Ok(_) => assert!(false),
-                Err(Error::InvalidOption(OptionError::OptionContainsInvalidChar { option })) => {
+                Err(InvalidOption::OptionContainsInvalidChar { option }) => {
                     assert_eq!(option, "@");
                 }
                 Err(_) => assert!(false),
@@ -518,7 +519,7 @@ mod tests_of_cmd {
             ]);
             match cmd.parse() {
                 Ok(_) => assert!(false),
-                Err(Error::InvalidOption(OptionError::OptionContainsInvalidChar { option })) => {
+                Err(InvalidOption::OptionContainsInvalidChar { option }) => {
                     assert_eq!(option, "1");
                 }
                 Err(_) => assert!(false),
