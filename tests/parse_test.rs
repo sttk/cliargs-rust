@@ -84,7 +84,7 @@ mod tests_of_errors {
             ffi::OsString::from("qux"),
         ]) {
             Ok(_) => assert!(false),
-            Err(cliargs::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
+            Err(cliargs::errors::InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
                 assert_eq!(index, 2);
                 assert_eq!(os_arg, bad_os_string);
             }
@@ -102,9 +102,7 @@ mod tests_of_errors {
         ]);
         match cmd.parse() {
             Ok(_) => assert!(false),
-            Err(cliargs::Error::InvalidOption(
-                cliargs::OptionError::OptionContainsInvalidChar { option },
-            )) => {
+            Err(cliargs::errors::InvalidOption::OptionContainsInvalidChar { option }) => {
                 assert_eq!(option, "b@z");
             }
             Err(_) => assert!(false),

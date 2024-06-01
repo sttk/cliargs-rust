@@ -4,23 +4,22 @@
 
 mod parse;
 
-use crate::Error;
-use crate::OptionError;
+use crate::errors::InvalidOption;
 
 fn parse_args<'a, F1, F2, F3>(
     args: &[&'a str],
     mut collect_args: F1,
     mut collect_opts: F2,
     take_args: F3,
-) -> Result<(), Error<'a>>
+) -> Result<(), InvalidOption>
 where
     F1: FnMut(&'a str),
-    F2: FnMut(&'a str, Option<&'a str>) -> Result<(), Error<'a>>,
+    F2: FnMut(&'a str, Option<&'a str>) -> Result<(), InvalidOption>,
     F3: Fn(&str) -> bool,
 {
     let mut is_non_opt = false;
     let mut prev_opt_taking_args = "";
-    let mut first_err: Option<Error> = None;
+    let mut first_err: Option<InvalidOption> = None;
 
     'L0: for (i_arg, arg) in args.iter().enumerate() {
         if is_non_opt {
@@ -61,18 +60,18 @@ where
                     }
                     if !is_allowed_character(ch) {
                         if first_err == None {
-                            first_err = Some(Error::InvalidOption(
-                                OptionError::OptionContainsInvalidChar { option: arg },
-                            ));
+                            first_err = Some(InvalidOption::OptionContainsInvalidChar {
+                                option: String::from(arg),
+                            });
                         }
                         continue 'L0;
                     }
                 } else {
                     if !is_allowed_first_character(ch) {
                         if first_err == None {
-                            first_err = Some(Error::InvalidOption(
-                                OptionError::OptionContainsInvalidChar { option: arg },
-                            ));
+                            first_err = Some(InvalidOption::OptionContainsInvalidChar {
+                                option: String::from(arg),
+                            });
                         }
                         continue 'L0;
                     }
@@ -130,11 +129,9 @@ where
                 }
                 if !is_allowed_first_character(ch) {
                     if first_err == None {
-                        first_err = Some(Error::InvalidOption(
-                            OptionError::OptionContainsInvalidChar {
-                                option: &arg[i..i + 1],
-                            },
-                        ));
+                        first_err = Some(InvalidOption::OptionContainsInvalidChar {
+                            option: String::from(&arg[i..i + 1]),
+                        });
                     }
                     name = "";
                 } else {

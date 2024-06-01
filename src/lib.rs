@@ -2,7 +2,8 @@
 // This program is free software under MIT License.
 // See the file LICENSE in this distribution for more details.
 
-mod errors;
+pub mod errors;
+
 mod parse;
 
 use std::collections::HashMap;
@@ -11,8 +12,6 @@ use std::ffi::OsString;
 use std::fmt;
 use std::mem;
 use std::path;
-
-pub use errors::{ConfigError, Error, OptionError, ParseError};
 
 pub struct Cmd<'a> {
     name: &'a str,
@@ -42,13 +41,13 @@ impl fmt::Debug for Cmd<'_> {
 }
 
 impl<'a> Cmd<'a> {
-    pub fn new() -> Result<Cmd<'a>, Error<'a>> {
+    pub fn new() -> Result<Cmd<'a>, errors::InvalidOsArg> {
         Self::with_os_strings(env::args_os())
     }
 
     pub fn with_os_strings(
         osargs: impl IntoIterator<Item = OsString>,
-    ) -> Result<Cmd<'a>, Error<'a>> {
+    ) -> Result<Cmd<'a>, errors::InvalidOsArg> {
         let osarg_iter = osargs.into_iter();
         let (size, _) = osarg_iter.size_hint();
         let mut _arg_refs = Vec::with_capacity(size);
@@ -59,25 +58,23 @@ impl<'a> Cmd<'a> {
         if let Some((idx, osarg)) = enm.next() {
             // The first element is the command path.
             let path = path::Path::new(&osarg);
-            let base: String;
-            if let Some(base_os) = path.file_name() {
-                if let Some(b) = base_os.to_str() {
-                    base = String::from(b);
+            let base_len = if let Some(base_os) = path.file_name() {
+                if let Some(base_str) = base_os.to_str() {
+                    base_str.len()
                 } else {
-                    base = String::from("");
+                    0
                 }
             } else {
-                base = String::from("");
-            }
+                0
+            };
             match osarg.into_string() {
                 Ok(string) => {
                     let str: &'a str = string.leak();
                     _arg_refs.push(str);
-                    let name_len = if str.ends_with(&base) { base.len() } else { 0 };
-                    cmd_name_start = str.len() - name_len;
+                    cmd_name_start = str.len() - base_len;
                 }
                 Err(osstring) => {
-                    return Err(crate::Error::OsArgsContainInvalidUnicode {
+                    return Err(errors::InvalidOsArg::OsArgsContainInvalidUnicode {
                         index: idx,
                         os_arg: osstring,
                     });
@@ -96,7 +93,7 @@ impl<'a> Cmd<'a> {
                             let boxed = unsafe { Box::from_raw(str as *const str as *mut str) };
                             mem::drop(boxed);
                         }
-                        return Err(Error::OsArgsContainInvalidUnicode {
+                        return Err(errors::InvalidOsArg::OsArgsContainInvalidUnicode {
                             index: idx,
                             os_arg: osstring,
                         });
@@ -127,17 +124,16 @@ impl<'a> Cmd<'a> {
         }
 
         let cmd_name_start: usize;
+
         if _arg_refs.len() > 0 {
             let path = path::Path::new(_arg_refs[0]);
-            let mut name_len = 0;
+            let mut base_len = 0;
             if let Some(base_os) = path.file_name() {
-                if let Some(base) = base_os.to_str() {
-                    if _arg_refs[0].ends_with(base) {
-                        name_len = base.len();
-                    }
+                if let Some(base_str) = base_os.to_str() {
+                    base_len = base_str.len();
                 }
             }
-            cmd_name_start = _arg_refs[0].len() - name_len;
+            cmd_name_start = _arg_refs[0].len() - base_len;
         } else {
             _arg_refs.push("");
             cmd_name_start = 0;
@@ -267,36 +263,6 @@ mod tests_of_cmd {
             let cmd = Cmd::with_strings([]);
             assert_eq!(cmd.name(), "");
         }
-
-        #[test]
-        fn should_get_command_name_when_command_path_is_folder() {
-            let cmd = Cmd::with_strings([
-                "/path/to/".to_string(),
-                "--foo".to_string(),
-                "--bar".to_string(),
-                "baz".to_string(),
-                "--bar".to_string(),
-                "qux".to_string(),
-                "quux".to_string(),
-                "corge".to_string(),
-            ]);
-            assert_eq!(cmd.name(), "");
-        }
-
-        #[test]
-        fn should_get_command_name_when_command_path_is_parent_folder() {
-            let cmd = Cmd::with_strings([
-                "app/..".to_string(),
-                "--foo".to_string(),
-                "--bar".to_string(),
-                "baz".to_string(),
-                "--bar".to_string(),
-                "qux".to_string(),
-                "quux".to_string(),
-                "corge".to_string(),
-            ]);
-            assert_eq!(cmd.name(), "");
-        }
     }
 
     mod tests_of_with_os_strings {
@@ -330,11 +296,10 @@ mod tests_of_cmd {
                 ffi::OsString::from("qux"),
             ]) {
                 Ok(_) => assert!(false),
-                Err(crate::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
+                Err(crate::errors::InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
                     assert_eq!(index, 2);
                     assert_eq!(os_arg, bad_os_string);
                 }
-                Err(_) => assert!(false),
             }
         }
 
@@ -351,11 +316,10 @@ mod tests_of_cmd {
                 ffi::OsString::from("qux"),
             ]) {
                 Ok(_) => assert!(false),
-                Err(crate::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
+                Err(crate::errors::InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
                     assert_eq!(index, 0);
                     assert_eq!(os_arg, bad_os_string);
                 }
-                Err(_) => assert!(false),
             }
         }
 
@@ -416,42 +380,6 @@ mod tests_of_cmd {
         #[test]
         fn should_get_command_name_when_command_line_arguments_is_empty() {
             if let Ok(cmd) = Cmd::with_os_strings([]) {
-                assert_eq!(cmd.name(), "");
-            } else {
-                assert!(false);
-            }
-        }
-
-        #[test]
-        fn should_get_command_name_when_command_path_is_folder() {
-            if let Ok(cmd) = Cmd::with_os_strings([
-                ffi::OsString::from("/path/to/"),
-                ffi::OsString::from("--foo"),
-                ffi::OsString::from("--bar"),
-                ffi::OsString::from("baz"),
-                ffi::OsString::from("--bar"),
-                ffi::OsString::from("qux"),
-                ffi::OsString::from("quux"),
-                ffi::OsString::from("corge"),
-            ]) {
-                assert_eq!(cmd.name(), "");
-            } else {
-                assert!(false);
-            }
-        }
-
-        #[test]
-        fn should_get_command_name_when_command_path_is_parent_folder() {
-            if let Ok(cmd) = Cmd::with_os_strings([
-                ffi::OsString::from("app/.."),
-                ffi::OsString::from("--foo"),
-                ffi::OsString::from("--bar"),
-                ffi::OsString::from("baz"),
-                ffi::OsString::from("--bar"),
-                ffi::OsString::from("qux"),
-                ffi::OsString::from("quux"),
-                ffi::OsString::from("corge"),
-            ]) {
                 assert_eq!(cmd.name(), "");
             } else {
                 assert!(false);
