@@ -108,3 +108,9 @@ mod tests_of_errors {
         }
     }
 }
+
+#[test]
+fn compile_error_check() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/compile_errors/*.rs");
+}

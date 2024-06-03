@@ -147,11 +147,11 @@ impl<'a> Cmd<'a> {
         }
     }
 
-    pub fn name(&self) -> &'a str {
+    pub fn name(&'a self) -> &'a str {
         self.name
     }
 
-    pub fn args(&self) -> &[&'a str] {
+    pub fn args(&'a self) -> &'a [&'a str] {
         &self.args
     }
 
@@ -159,7 +159,7 @@ impl<'a> Cmd<'a> {
         self.opts.contains_key(name)
     }
 
-    pub fn opt_arg(&self, name: &str) -> Option<&str> {
+    pub fn opt_arg(&'a self, name: &str) -> Option<&'a str> {
         if let Some(opt_vec) = self.opts.get(name) {
             if opt_vec.len() > 0 {
                 return Some(opt_vec[0]);
@@ -168,7 +168,7 @@ impl<'a> Cmd<'a> {
         None
     }
 
-    pub fn opt_args(&self, name: &str) -> Option<&[&'a str]> {
+    pub fn opt_args(&'a self, name: &str) -> Option<&'a [&'a str]> {
         match self.opts.get(name) {
             Some(vec) => Some(&vec),
             None => None,

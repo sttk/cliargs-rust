@@ -1,0 +1,16 @@
+warning: unused import: `cliargs::Cmd`
+ --> tests/compile_errors/lifetime_of_cmd_opt_arg.rs:1:5
+  |
+1 | use cliargs::Cmd;
+  |     ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0515]: cannot return value referencing local variable `cmd`
+  --> tests/compile_errors/lifetime_of_cmd_opt_arg.rs:12:9
+   |
+9  |         let opt_arg = cmd.opt_arg("foo").unwrap();
+   |                       --- `cmd` is borrowed here
+...
+12 |         opt_arg
+   |         ^^^^^^^ returns a value referencing data owned by the current function

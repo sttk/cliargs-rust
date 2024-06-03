@@ -1,0 +1,8 @@
+error[E0515]: cannot return value referencing local variable `cmd`
+  --> tests/compile_errors/lifetime_of_cmd_name.rs:11:9
+   |
+8  |         let name = cmd.name();
+   |                    --- `cmd` is borrowed here
+...
+11 |         name
+   |         ^^^^ returns a value referencing data owned by the current function
