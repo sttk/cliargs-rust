@@ -15,3 +15,6 @@ categories = ["command-line interface"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[dev-dependencies]
+trybuild = "1.0"
