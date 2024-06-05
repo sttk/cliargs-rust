@@ -2,6 +2,110 @@
 // This program is free software under MIT License.
 // See the file LICENSE in this distribution for more details.
 
+//! This crate is a library to parse command line arguments.
+//!
+//! This crate provides the following functionalities:
+//!
+//! - Supports [POSIX][posix] & [GNU][gnu] like short and long options.
+//!     - This crate supports `--` option.
+//!     - This library doesn't support numeric short option.
+//!     - This library supports not `-ofoo` but `-o=foo` as an alternative to
+//!       `-o foo` for short option.
+//!
+//! [posix]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
+//! [gnu]: https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html
+//!
+//! ## Install
+//!
+//! In `Cargo.toml`, write this crate as a dependency.
+//!
+//! ```toml
+//! [dependencies]
+//! cliargs = "0.1.0"
+//! ```
+//!
+//! ## Usage
+//!
+//! This crate provides the `Cmd` strcut to parse command line arguments.
+//! The usage of this `Cmd` struct is as follows:
+//!
+//! ### Creates a `Cmd` instance
+//!
+//! The `Cmd::new` function creates a `Cmd` instance with original command line
+//! arguments.
+//! This function uses `std::env::arg_os` and `OsString#into_string` to read
+//! command line arguments in order to avoid `panic!` call that the user cannot
+//! control.
+//!
+//! ```rust
+//! use cliargs::Cmd;
+//! use cliargs::errors::InvalidOsArg;
+//!
+//! let cmd = match Cmd::new() {
+//!     Ok(cmd) => cmd,
+//!     Err(InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
+//!         panic!("Invalid Unicode data: {:?} (index: {})", os_arg, index);
+//!     }
+//! };
+//! ```
+//!
+//! ### Creates a `Cmd` instance with the specified `String` array
+//!
+//! The `Cmd::with_strings` function creates a `Cmd` instance with the
+//! specified `String` array.
+//!
+//! ```rust
+//! use cliargs::Cmd;
+//! use std::env;
+//!
+//! let cmd = Cmd::with_strings(env::args());
+//! ```
+//!
+//! ### Creates a `Cmd` instance with the specified `OsString` array.
+//!
+//! ```rust
+//! use cliargs::Cmd;
+//! use cliargs::errors::InvalidOsArg;
+//! use std::env;
+//!
+//! let cmd = match Cmd::with_os_strings(env::args_os()) {
+//!     Ok(cmd) => cmd,
+//!     Err(InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
+//!         panic!("Invalid Unicode data: {:?} (index: {})", os_arg, index);
+//!     }
+//! };
+//! ```
+//!
+//! ## Parses without configurations
+//!
+//! The `Cmd` struct has the method which parses command line arguments without
+//! configurations.
+//! This method automatically divides command line arguments to options and
+//! command arguments.
+//!
+//! Command line arguments starts with `-` or `--` are options, and others are
+//! command arguments.
+//! If you want to specify a value to an option, follows `"="` and the value
+//! after the option, like `foo=123`.
+//!
+//! All command line arguments after `--` are command arguments, even they
+//! starts with `-` or `--`.
+//!
+//! ```rust
+//! use cliargs::Cmd;
+//! use cliargs::errors::InvalidOption;
+//!
+//! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+//! match cmd.parse() {
+//!     Ok(_) => { /* ... */ },
+//!     Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+//!         panic!("Option contains invalid character: {option}");
+//!     },
+//!     Err(err) => panic!("Invalid option: {}", err.option()),
+//! }
+//! ```
+
+/// Enums for errors that can occur when parsing command line arguments.
 pub mod errors;
 
 mod parse;
@@ -13,6 +117,15 @@ use std::fmt;
 use std::mem;
 use std::path;
 
+/// `Cmd` is the struct that parses command line arguments and stores them.
+///
+/// The results of parsing are stored by separating into command name,
+/// command arguments, options, and option arguments.
+///
+/// These values are retrieved as string slices with the same lifetime as this
+/// `Cmd` instance.
+/// Therefore, if you want to use those values for a longer period, it is
+/// needed to convert them to [String]s.
 pub struct Cmd<'a> {
     name: &'a str,
     args: Vec<&'a str>,
@@ -41,10 +154,20 @@ impl fmt::Debug for Cmd<'_> {
 }
 
 impl<'a> Cmd<'a> {
+    /// Creates a `Cmd` instance with command line arguments obtained from
+    /// [std::env::args_os].
+    ///
+    /// Since [std::env::args_os] returns a vector of [OsString] and they can
+    /// contain invalid unicode data, the return value of this funciton is
+    /// [Result] of `Cmd` or `errors::InvalidOsArg`.
     pub fn new() -> Result<Cmd<'a>, errors::InvalidOsArg> {
         Self::with_os_strings(env::args_os())
     }
 
+    /// Creates a `Cmd` instance with the specified iterator of [OsString]s.
+    ///
+    /// [OsString]s can contain invalid unicode data, the return value of
+    /// this function is [Result] of `Cmd` or `errors::InvalidOsArg`.
     pub fn with_os_strings(
         osargs: impl IntoIterator<Item = OsString>,
     ) -> Result<Cmd<'a>, errors::InvalidOsArg> {
@@ -113,6 +236,7 @@ impl<'a> Cmd<'a> {
         })
     }
 
+    /// Creates a `Cmd` instance with the specified iterator of [String]s.
     pub fn with_strings(args: impl IntoIterator<Item = String>) -> Cmd<'a> {
         let arg_iter = args.into_iter();
         let (size, _) = arg_iter.size_hint();
@@ -147,18 +271,34 @@ impl<'a> Cmd<'a> {
         }
     }
 
+    /// Returns the command name.
+    ///
+    /// This name is base name extracted from the command path string slice,
+    /// which is the first element of the command line arguments.
     pub fn name(&'a self) -> &'a str {
         self.name
     }
 
+    /// Returns the command arguments.
+    ///
+    /// These arguments are retrieved as string slices in an array.
     pub fn args(&'a self) -> &'a [&'a str] {
         &self.args
     }
 
+    /// Checks whether an option with the specified name exists.
     pub fn has_opt(&self, name: &str) -> bool {
         self.opts.contains_key(name)
     }
 
+    /// Returns the option argument with the specified name.
+    ///
+    /// If the option has multiple arguments, this method returns the first
+    /// argument.
+    ///
+    /// Since the option may not be specified in the command line arguments,
+    /// the return value of this method  is an [Option] of an option argument
+    /// or [None].
     pub fn opt_arg(&'a self, name: &str) -> Option<&'a str> {
         if let Some(opt_vec) = self.opts.get(name) {
             if opt_vec.len() > 0 {
@@ -168,6 +308,14 @@ impl<'a> Cmd<'a> {
         None
     }
 
+    /// Returns the option arguments with the specified name.
+    ///
+    /// If the option has one or multiple arguments, this method returns an
+    /// array of the arguments.
+    ///
+    /// Since the option may not be specified in the command line arguments,
+    /// the return value of this method is an [Option] of option arguments or
+    /// [None].
     pub fn opt_args(&'a self, name: &str) -> Option<&'a [&'a str]> {
         match self.opts.get(name) {
             Some(vec) => Some(&vec),
