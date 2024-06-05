@@ -34,11 +34,12 @@ This function uses `std::env::args_os` and `OsString#into_string` to read comman
 
 ```
 use cliargs::Cmd;
+use cliargs::errors::InvalidOsArg;
 
 let cmd = match Cmd::new() {
     Ok(cmd) => cmd,
-    Err(cliargs::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
-        panic!("Invalid Unicode data: {os_arg} (index: {index})");
+    Err(InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
+        panic!("Invalid Unicode data: {:?} (index: {})", os_arg, index);
     }
 };
 ```
@@ -60,12 +61,13 @@ The `Cmd::with_os_strings` function creates a `Cmd` instance with the specified 
 
 ```
 use cliargs::Cmd;
+use cliargs::errors::InvalidOsArg;
 use std::env;
 
 let cmd = match Cmd::with_os_strings(env::args_os()) {
     Ok(cmd) => cmd,
-    Err(cliargs::Error::OsArgsContainInvalidUnicode { index, os_arg }) => {
-        panic!("Invalid Unicode data: {os_arg} (index: {index})");
+    Err(InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg }) => {
+        panic!("Invalid Unicode data: {:?} (index: {})", os_arg, index);
     }
 };
 ```
@@ -73,7 +75,7 @@ let cmd = match Cmd::with_os_strings(env::args_os()) {
 ### Parses without configurations
 
 The `Cmd` struct has the method which parses command line arguments without configurations.
-This function automatically divides command line arguments to options and command arguments.
+This method automatically divides command line arguments to command arguments, options, and option arguments.
 
 Command line arguments starts with `-` or `--` are options, and others are command arguments.
 If you want to specify a value to an option, follows `"="` and the value after the option, like `foo=123`.
@@ -82,20 +84,15 @@ All command line arguments after `--` are command arguments, even they starts wi
 
 ```
 use cliargs::Cmd;
+use cliargs::errors::InvalidOption;
 
-let cmd = Cmd::with_strings(vec![
-    "path/to/app", "--foo-bar", "hoge", "--baz", "1", "-z=2", "-xyz=3", "fuga"
-]);
-
+let cmd = Cmd::with_strings(vec![ /* ... */ ]);
 match cmd.parse() {
-    Ok(_) => {},
-    Err(cliargs::Error::InvalidOption(err)) => {
-        match err {
-            cliargs::Error::OptionContainsInvalidChar{ option } => { ... }
-            _ => {}
-        }
-        panic!("The option: {} is invalid.", err.option());
-    }
+    Ok(_) => { /* ... */ },
+    Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+        panic!("Option contains invalid character: {option}");
+    },
+    Err(errr) => panic!("Invalid option: {}", err.option()),
 }
 ```
 
