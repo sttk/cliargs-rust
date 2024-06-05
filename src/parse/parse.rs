@@ -7,6 +7,20 @@ use crate::errors::InvalidOption;
 use crate::Cmd;
 
 impl<'a> Cmd<'a> {
+    /// Parses command line arguments without configurations.
+    ///
+    /// This method divides command line arguments into options and command
+    /// arguments based on a simple rule: arguments staring with `-` or `--`
+    /// are treated as options, and otherwise are treated as command arguments.
+    /// If an `=` is found within an option, the part before the `=` is treated
+    /// as the option name, and the part after the `=` is treated as the option
+    /// argument.
+    /// If an argument is exactly `--`, all subsequent arguments are treated as
+    /// command arguments.
+    ///
+    /// Since the results of parsing are stored into this `Cmd` instance, this
+    /// method returns a [Result] which contains an unit value (`()`) if
+    /// succeeding, or a `errors::InvalidOption` if failing.
     pub fn parse(&mut self) -> Result<(), InvalidOption> {
         let collect_args = |arg| {
             self.args.push(arg);

@@ -5,16 +5,60 @@
 use std::error;
 use std::fmt;
 
+/// The enum type for errors of options or option arguments.
+///
+/// This enum type has `option()` method, which makes it possible to handle
+/// option-related errors in a unified manner.
 #[derive(Debug, PartialEq)]
 pub enum InvalidOption {
-    OptionContainsInvalidChar { option: String },
-    UnconfiguredOption { option: String },
-    OptionNeedsArg { option: String, store_key: String },
-    OptionTakesNoArg { option: String, store_key: String },
-    OptionIsNotMultiArgs { option: String, store_key: String },
+    /// Indicates that the name of an option is using invalid characters.
+    /// This error occurs if the name contains symbols or starts with a symbol
+    /// or number.
+    OptionContainsInvalidChar {
+        /// The option name that caused this error.
+        option: String,
+    },
+
+    /// Indicates that the option with the specified name does not exist in the
+    /// option configurations.
+    UnconfiguredOption {
+        /// The option name that caused this error.
+        option: String,
+    },
+
+    /// Indicates that the option requires arguments in the configuration, but
+    /// no argument is specified.
+    OptionNeedsArg {
+        /// The option name that caused this error.
+        option: String,
+
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
+
+    /// Indicates that the option is not suppoesed to take an argument in the
+    /// configuration, but an argument is specified.
+    OptionTakesNoArg {
+        /// The option name that caused this error.
+        option: String,
+
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
+
+    /// Indicates that the option is supposed to take one argument in the
+    /// configuration, but multiple arguments are specified.
+    OptionIsNotMultiArgs {
+        /// The option name that caused this error.
+        option: String,
+
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
 }
 
 impl InvalidOption {
+    /// Returns the name of the option that caused the error.
     pub fn option(&self) -> &str {
         return match self {
             InvalidOption::OptionContainsInvalidChar { option } => &option,

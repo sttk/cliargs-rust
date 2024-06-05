@@ -5,21 +5,54 @@
 use std::error;
 use std::fmt;
 
+/// The enum type for errors of option configurations.
+///
+/// This enum type has `store_key()` method, which makes it possible to handle
+/// configuration-related errors in a unified manner.
 #[derive(Debug, PartialEq)]
 pub enum InvalidConfig {
-    StoreKeyIsDuplicated { store_key: String },
-    ConfigIsMultiArgsButHasNoArg { store_key: String },
-    ConfigHasDefaultsButHasNoArg { store_key: String },
-    OptionNameIsDuplicated { store_key: String, name: String },
+    /// Indicates that there are duplicate store keys among multiple
+    /// configurations.
+    StoreKeyIsDuplicated {
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
+
+    /// Indicates that an option configuration contradicts that the option can
+    /// take multiple arguments (`.is_multi_args == true`) though it does not
+    /// take option arguments (`.has_arg == false`).
+    ConfigIsMultiArgsButHasNoArg {
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
+
+    /// Indicates that an option configuration contradicts that the default
+    /// arguments (`.defaults`) is not empty though it does not take option
+    /// arguments (`has_arg == false`).
+    ConfigHasDefaultsButHasNoArg {
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+    },
+
+    /// Indicates that there are duplicated option names among the option
+    /// configurations.
+    OptionNameIsDuplicated {
+        /// The store key of the specified option in the configuration.
+        store_key: String,
+
+        /// The option name that caused this error.
+        name: String,
+    },
 }
 
 impl InvalidConfig {
+    /// Returns the key used to store the option in the `Cmd` instance.
     pub fn store_key(&self) -> &str {
         return match self {
-            InvalidConfig::StoreKeyIsDuplicated { store_key } => store_key,
-            InvalidConfig::ConfigIsMultiArgsButHasNoArg { store_key } => store_key,
-            InvalidConfig::ConfigHasDefaultsButHasNoArg { store_key } => store_key,
-            InvalidConfig::OptionNameIsDuplicated { store_key, .. } => store_key,
+            InvalidConfig::StoreKeyIsDuplicated { store_key } => &store_key,
+            InvalidConfig::ConfigIsMultiArgsButHasNoArg { store_key } => &store_key,
+            InvalidConfig::ConfigHasDefaultsButHasNoArg { store_key } => &store_key,
+            InvalidConfig::OptionNameIsDuplicated { store_key, .. } => &store_key,
         };
     }
 }

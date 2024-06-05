@@ -6,9 +6,21 @@ use std::error;
 use std::ffi;
 use std::fmt;
 
+/// The enum type for errors of `OsString` arguments.
+///
+/// The variants of this enum indicates errors that can occur when operating
+/// command line arguments represented by `OsString`.
 #[derive(Debug, PartialEq)]
 pub enum InvalidOsArg {
-    OsArgsContainInvalidUnicode { index: usize, os_arg: ffi::OsString },
+    /// The enum variant which indicates that at least one `OsString` value in
+    /// the command line arguments is invalid Unicode.
+    OsArgsContainInvalidUnicode {
+        /// The index of the invalid argument.
+        /// The argument of which index is zero is the command path.
+        index: usize,
+        /// The `OsString` value of the invalid argument.
+        os_arg: ffi::OsString,
+    },
 }
 
 impl fmt::Display for InvalidOsArg {
