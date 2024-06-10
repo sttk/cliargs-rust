@@ -48,12 +48,70 @@ pub enum InvalidOption {
 
     /// Indicates that the option is supposed to take one argument in the
     /// configuration, but multiple arguments are specified.
-    OptionIsNotMultiArgs {
+    OptionIsNotArray {
         /// The option name that caused this error.
         option: String,
 
         /// The store key of the specified option in the configuration.
         store_key: String,
+    },
+
+    /// Indicates that there are duplicated store keys among multiple
+    /// configurations.
+    StoreKeyIsDuplicated {
+        /// The store key that caused this error.
+        store_key: String,
+
+        /// The first name of the option configuration.
+        name: String,
+    },
+
+    /// Indicates that an option configuration contradicts that the option can
+    /// take multiple arguments (`.is_array == true`) though it does not
+    /// take option arguments (`.has_arg == false`).
+    ConfigIsArrayButHasNoArg {
+        /// The store key of the option configuration that caused this error.
+        store_key: String,
+
+        /// The first name of the option configuration.
+        name: String,
+    },
+
+    /// Indicates that an option configuration contradicts that the default
+    /// arguments (`.defaults`) is not empty though it does not take option
+    /// arguments (`.has_arg == false`).
+    ConfigHasDefaultsButHasNoArg {
+        /// The store key of the option configuration that caused this error.
+        store_key: String,
+
+        /// The first name of the option configuration.
+        name: String,
+    },
+
+    /// Indicates that there are duplicated opton names among the option
+    /// configurations.
+    OptionNameIsDuplicated {
+        /// The store key of the option configuration that caused this error.
+        store_key: String,
+
+        /// The option name that caused this error.
+        name: String,
+    },
+
+    /// Indicates that the option argument is invalidated by the validator
+    /// in the option configuration.
+    OptionArgIsInvalid {
+        /// The store key of the option configuration that caused this error.
+        store_key: String,
+
+        /// The option name that caused this error.
+        option: String,
+
+        /// The option argument that was validated.
+        opt_arg: String,
+
+        /// The details for the invalidation.
+        details: String,
     },
 }
 
@@ -65,7 +123,12 @@ impl InvalidOption {
             InvalidOption::UnconfiguredOption { option } => &option,
             InvalidOption::OptionNeedsArg { option, .. } => &option,
             InvalidOption::OptionTakesNoArg { option, .. } => &option,
-            InvalidOption::OptionIsNotMultiArgs { option, .. } => &option,
+            InvalidOption::OptionIsNotArray { option, .. } => &option,
+            InvalidOption::StoreKeyIsDuplicated { name, .. } => &name,
+            InvalidOption::ConfigIsArrayButHasNoArg { name, .. } => &name,
+            InvalidOption::ConfigHasDefaultsButHasNoArg { name, .. } => &name,
+            InvalidOption::OptionNameIsDuplicated { name, .. } => &name,
+            InvalidOption::OptionArgIsInvalid { option, .. } => &option,
         };
     }
 }
@@ -93,10 +156,27 @@ impl fmt::Display for InvalidOption {
                 "The option takes no argument (option: \"{}\")",
                 option.escape_debug(),
             ),
-            InvalidOption::OptionIsNotMultiArgs { option, .. } => write!(
+            InvalidOption::OptionIsNotArray { option, .. } => write!(
                 f,
                 "The option cannot have multiple arguments (option: \"{}\")",
                 option.escape_debug(),
+            ),
+            InvalidOption::OptionArgIsInvalid {
+                option,
+                opt_arg,
+                details,
+                ..
+            } => write!(
+                f,
+                "The option argument \"{}\" is invalid because: {} (option: \"{}\")",
+                opt_arg.escape_debug(),
+                details.escape_debug(),
+                option.escape_debug(),
+            ),
+            _ => write!(
+                f,
+                "The option configuration is invalid (option: \"{}\")",
+                self.option(),
             ),
         }
     }
@@ -468,12 +548,12 @@ mod tests_of_invalid_option {
         }
     }
 
-    mod tests_of_option_is_not_multi_args {
+    mod tests_of_option_is_not_array {
         use super::*;
 
         #[test]
         fn should_create_and_handle() {
-            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotMultiArgs {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotArray {
                 option: "foo-bar".to_string(),
                 store_key: "fooBar".to_string(),
             });
@@ -483,7 +563,7 @@ mod tests_of_invalid_option {
             }
             match result {
                 Ok(_) => assert!(false),
-                Err(InvalidOption::OptionIsNotMultiArgs { option, store_key }) => {
+                Err(InvalidOption::OptionIsNotArray { option, store_key }) => {
                     assert_eq!(option, "foo-bar");
                     assert_eq!(store_key, "fooBar");
                 }
@@ -493,7 +573,7 @@ mod tests_of_invalid_option {
 
         #[test]
         fn should_write_for_debug() {
-            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotMultiArgs {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotArray {
                 option: "foo-bar".to_string(),
                 store_key: "fooBar".to_string(),
             });
@@ -503,7 +583,7 @@ mod tests_of_invalid_option {
                     println!("{err}");
                     assert_eq!(
                         format!("{err:?}"),
-                        "OptionIsNotMultiArgs { option: \"foo-bar\", store_key: \"fooBar\" }",
+                        "OptionIsNotArray { option: \"foo-bar\", store_key: \"fooBar\" }",
                     );
                 }
             }
@@ -511,7 +591,7 @@ mod tests_of_invalid_option {
 
         #[test]
         fn should_write_for_display() {
-            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotMultiArgs {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionIsNotArray {
                 option: "foo-bar".to_string(),
                 store_key: "fooBar".to_string(),
             });
@@ -530,7 +610,7 @@ mod tests_of_invalid_option {
         #[test]
         fn should_handle_as_dyn_std_error() {
             fn returns_error() -> Result<(), InvalidOption> {
-                Err(InvalidOption::OptionIsNotMultiArgs {
+                Err(InvalidOption::OptionIsNotArray {
                     option: "b@z".to_string(),
                     store_key: "BAZ".to_string(),
                 })
@@ -547,9 +627,485 @@ mod tests_of_invalid_option {
                     if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
                         assert_eq!(opt_err.option(), "b@z");
                         match opt_err {
-                            InvalidOption::OptionIsNotMultiArgs { option, store_key } => {
+                            InvalidOption::OptionIsNotArray { option, store_key } => {
                                 assert_eq!(*option, "b@z");
                                 assert_eq!(*store_key, "BAZ");
+                            }
+                            _ => assert!(false),
+                        }
+                    } else {
+                        assert!(false);
+                    }
+                }
+            }
+        }
+    }
+
+    mod store_key_is_duplicated {
+        use super::*;
+
+        #[test]
+        fn should_create_and_handle() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::StoreKeyIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(ref err) => assert_eq!(err.option(), "foo-bar"),
+            }
+            match result {
+                Ok(_) => assert!(false),
+                Err(InvalidOption::StoreKeyIsDuplicated { store_key, name }) => {
+                    assert_eq!(store_key, "fooBar");
+                    assert_eq!(name, "foo-bar");
+                }
+                Err(_) => assert!(false),
+            }
+        }
+
+        #[test]
+        fn should_write_for_debug() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::StoreKeyIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "StoreKeyIsDuplicated { store_key: \"fooBar\", name: \"foo-bar\" }",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_write_for_display() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::StoreKeyIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err}"),
+                        "The option configuration is invalid (option: \"foo-bar\")",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_handle_as_std_error() {
+            fn returns_error() -> Result<(), InvalidOption> {
+                Err(InvalidOption::StoreKeyIsDuplicated {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                })
+            }
+            fn returns_dyn_error() -> Result<(), Box<dyn error::Error>> {
+                returns_error()?;
+                Ok(())
+            }
+            match returns_dyn_error() {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
+                        assert_eq!(opt_err.option(), "foo-bar");
+                        match opt_err {
+                            InvalidOption::StoreKeyIsDuplicated { store_key, name } => {
+                                assert_eq!(*store_key, "fooBar");
+                                assert_eq!(*name, "foo-bar");
+                            }
+                            _ => assert!(false),
+                        }
+                    } else {
+                        assert!(false);
+                    }
+                }
+            }
+        }
+    }
+
+    mod config_is_array_but_has_no_arg {
+        use super::*;
+
+        #[test]
+        fn should_create_and_handle() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::ConfigIsArrayButHasNoArg {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(ref err) => assert_eq!(err.option(), "foo-bar"),
+            }
+            match result {
+                Ok(_) => assert!(false),
+                Err(InvalidOption::ConfigIsArrayButHasNoArg { store_key, name }) => {
+                    assert_eq!(store_key, "fooBar");
+                    assert_eq!(name, "foo-bar");
+                }
+                _ => assert!(false),
+            }
+        }
+
+        #[test]
+        fn should_write_for_debug() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::ConfigIsArrayButHasNoArg {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "ConfigIsArrayButHasNoArg { store_key: \"fooBar\", name: \"foo-bar\" }",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_write_for_display() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::ConfigIsArrayButHasNoArg {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err}"),
+                        "The option configuration is invalid (option: \"foo-bar\")",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_handle_as_std_error() {
+            fn returns_error() -> Result<(), InvalidOption> {
+                Err(InvalidOption::ConfigIsArrayButHasNoArg {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                })
+            }
+            fn returns_dyn_error() -> Result<(), Box<dyn error::Error>> {
+                returns_error()?;
+                Ok(())
+            }
+            match returns_dyn_error() {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
+                        assert_eq!(opt_err.option(), "foo-bar");
+                        match opt_err {
+                            InvalidOption::ConfigIsArrayButHasNoArg { store_key, name } => {
+                                assert_eq!(*store_key, "fooBar");
+                                assert_eq!(*name, "foo-bar");
+                            }
+                            _ => assert!(false),
+                        }
+                    } else {
+                        assert!(false);
+                    }
+                }
+            }
+        }
+    }
+
+    mod config_has_defaults_but_has_no_arg {
+        use super::*;
+
+        #[test]
+        fn should_create_and_handle() {
+            let result: Result<(), InvalidOption> =
+                Err(InvalidOption::ConfigHasDefaultsButHasNoArg {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                });
+            match result {
+                Ok(_) => assert!(false),
+                Err(ref err) => {
+                    assert_eq!(err.option(), "foo-bar");
+                }
+            }
+            match result {
+                Ok(_) => assert!(false),
+                Err(InvalidOption::ConfigHasDefaultsButHasNoArg { store_key, name }) => {
+                    assert_eq!(store_key, "fooBar");
+                    assert_eq!(name, "foo-bar");
+                }
+                Err(_) => assert!(false),
+            }
+        }
+
+        #[test]
+        fn should_write_for_debug() {
+            let result: Result<(), InvalidOption> =
+                Err(InvalidOption::ConfigHasDefaultsButHasNoArg {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "ConfigHasDefaultsButHasNoArg { store_key: \"fooBar\", name: \"foo-bar\" }",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_write_for_display() {
+            let result: Result<(), InvalidOption> =
+                Err(InvalidOption::ConfigHasDefaultsButHasNoArg {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err}"),
+                        "The option configuration is invalid (option: \"foo-bar\")",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_handle_as_std_error() {
+            fn returns_error() -> Result<(), InvalidOption> {
+                Err(InvalidOption::ConfigHasDefaultsButHasNoArg {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                })
+            }
+            fn returns_dyn_error() -> Result<(), Box<dyn error::Error>> {
+                returns_error()?;
+                Ok(())
+            }
+            match returns_dyn_error() {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
+                        assert_eq!(opt_err.option(), "foo-bar");
+                        match opt_err {
+                            InvalidOption::ConfigHasDefaultsButHasNoArg { store_key, name } => {
+                                assert_eq!(*store_key, "fooBar");
+                                assert_eq!(*name, "foo-bar");
+                            }
+                            _ => assert!(false),
+                        }
+                    } else {
+                        assert!(false);
+                    }
+                }
+            }
+        }
+    }
+
+    mod option_name_is_duplicated {
+        use super::*;
+
+        #[test]
+        fn should_create_and_handle() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionNameIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(ref err) => {
+                    assert_eq!(err.option(), "foo-bar");
+                }
+            }
+            match result {
+                Ok(_) => assert!(false),
+                Err(InvalidOption::OptionNameIsDuplicated { store_key, name }) => {
+                    assert_eq!(store_key, "fooBar");
+                    assert_eq!(name, "foo-bar");
+                }
+                Err(_) => assert!(false),
+            }
+        }
+
+        #[test]
+        fn should_write_for_debug() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionNameIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "OptionNameIsDuplicated { store_key: \"fooBar\", name: \"foo-bar\" }",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_write_for_display() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionNameIsDuplicated {
+                store_key: "fooBar".to_string(),
+                name: "foo-bar".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err}"),
+                        "The option configuration is invalid (option: \"foo-bar\")",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_handle_as_std_error() {
+            fn returns_error() -> Result<(), InvalidOption> {
+                Err(InvalidOption::OptionNameIsDuplicated {
+                    store_key: "fooBar".to_string(),
+                    name: "foo-bar".to_string(),
+                })
+            }
+            fn returns_dyn_error() -> Result<(), Box<dyn error::Error>> {
+                returns_error()?;
+                Ok(())
+            }
+            match returns_dyn_error() {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
+                        assert_eq!(opt_err.option(), "foo-bar");
+                        match opt_err {
+                            InvalidOption::OptionNameIsDuplicated { store_key, name } => {
+                                assert_eq!(*store_key, "fooBar");
+                                assert_eq!(*name, "foo-bar");
+                            }
+                            _ => assert!(false),
+                        }
+                    } else {
+                        assert!(false);
+                    }
+                }
+            }
+        }
+    }
+
+    mod option_arg_is_invalid {
+        use super::*;
+
+        #[test]
+        fn should_create_and_handle() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionArgIsInvalid {
+                store_key: "fooBar".to_string(),
+                option: "foo-bar".to_string(),
+                opt_arg: "x123".to_string(),
+                details: "illegal number format.".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(ref err) => {
+                    assert_eq!(err.option(), "foo-bar");
+                }
+            }
+            match result {
+                Ok(_) => assert!(false),
+                Err(InvalidOption::OptionArgIsInvalid {
+                    store_key,
+                    option,
+                    opt_arg,
+                    details,
+                }) => {
+                    assert_eq!(store_key, "fooBar");
+                    assert_eq!(option, "foo-bar");
+                    assert_eq!(opt_arg, "x123");
+                    assert_eq!(details, "illegal number format.");
+                }
+                Err(_) => assert!(false),
+            }
+        }
+
+        #[test]
+        fn should_write_for_debug() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionArgIsInvalid {
+                store_key: "fooBar".to_string(),
+                option: "foo-bar".to_string(),
+                opt_arg: "x123".to_string(),
+                details: "illegal number format.".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "OptionArgIsInvalid { store_key: \"fooBar\", option: \"foo-bar\", opt_arg: \"x123\", details: \"illegal number format.\" }",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_write_for_display() {
+            let result: Result<(), InvalidOption> = Err(InvalidOption::OptionArgIsInvalid {
+                store_key: "fooBar".to_string(),
+                option: "foo-bar".to_string(),
+                opt_arg: "x123".to_string(),
+                details: "illegal number format.".to_string(),
+            });
+            match result {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    assert_eq!(
+                        format!("{err}"),
+                        "The option argument \"x123\" is invalid because: illegal number format. (option: \"foo-bar\")",
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn should_handle_as_std_error() {
+            fn returns_error() -> Result<(), InvalidOption> {
+                Err(InvalidOption::OptionArgIsInvalid {
+                    store_key: "fooBar".to_string(),
+                    option: "foo-bar".to_string(),
+                    opt_arg: "x123".to_string(),
+                    details: "illegal number format.".to_string(),
+                })
+            }
+            fn returns_dyn_error() -> Result<(), Box<dyn error::Error>> {
+                returns_error()?;
+                Ok(())
+            }
+            match returns_dyn_error() {
+                Ok(_) => assert!(false),
+                Err(err) => {
+                    if let Some(opt_err) = err.downcast_ref::<InvalidOption>() {
+                        assert_eq!(opt_err.option(), "foo-bar");
+                        match opt_err {
+                            InvalidOption::OptionArgIsInvalid {
+                                store_key,
+                                option,
+                                opt_arg,
+                                details,
+                            } => {
+                                assert_eq!(*store_key, "fooBar");
+                                assert_eq!(*option, "foo-bar");
+                                assert_eq!(*opt_arg, "x123");
+                                assert_eq!(*details, "illegal number format.");
                             }
                             _ => assert!(false),
                         }

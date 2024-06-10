@@ -108,7 +108,11 @@
 /// Enums for errors that can occur when parsing command line arguments.
 pub mod errors;
 
+mod opt_cfg;
 mod parse;
+
+pub use opt_cfg::OptCfg;
+pub use opt_cfg::OptCfgParam;
 
 use std::collections::HashMap;
 use std::env;
@@ -117,7 +121,7 @@ use std::fmt;
 use std::mem;
 use std::path;
 
-/// `Cmd` is the struct that parses command line arguments and stores them.
+/// Parses command line arguments and stores them.
 ///
 /// The results of parsing are stored by separating into command name,
 /// command arguments, options, and option arguments.
