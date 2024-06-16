@@ -76,14 +76,18 @@ impl<'a> Cmd<'a> {
                 }
             }
 
-            for name in cfg.names.iter() {
-                if cfg_map.contains_key(name.as_str()) {
-                    return Err(InvalidOption::OptionNameIsDuplicated {
-                        store_key: store_key.to_string(),
-                        name: name.to_string(),
-                    });
+            if cfg.names.is_empty() {
+                cfg_map.insert(first_name, i);
+            } else {
+                for name in cfg.names.iter() {
+                    if cfg_map.contains_key(name.as_str()) {
+                        return Err(InvalidOption::OptionNameIsDuplicated {
+                            store_key: store_key.to_string(),
+                            name: name.to_string(),
+                        });
+                    }
+                    cfg_map.insert(name, i);
                 }
-                cfg_map.insert(name, i);
             }
         }
 
@@ -1376,6 +1380,28 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+    }
+
+    #[test]
+    fn use_store_key_as_option_name_if_names_is_empty() {
+        let opt_cfgs = vec![OptCfg::with(&[store_key("FooBar")])];
+
+        let mut cmd = Cmd::with_strings(["app".to_string(), "--FooBar".to_string()]);
+
+        let result = cmd.parse_with(&opt_cfgs);
+        match result {
+            Ok(()) => {}
+            Err(err) => {
+                println!("{:?}", err);
+                assert!(false);
+            }
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.has_opt("FooBar"), true);
+        assert_eq!(cmd.opt_arg("FooBar"), None);
+        assert_eq!(cmd.opt_args("FooBar"), Some(&[] as &[&str]));
+        assert_eq!(cmd.args(), &[] as &[&str]);
     }
 
     #[test]

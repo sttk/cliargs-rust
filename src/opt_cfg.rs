@@ -41,6 +41,8 @@ pub struct OptCfg {
     pub arg_in_help: String,
 
     /// Is the function pointer to validate the option argument(s).
+    /// If the option argument is invalid, this funciton returns a
+    /// `InvalidOption::OptionArgIsInvalid` instance.
     pub validator: fn(store_key: &str, name: &str, arg: &str) -> Result<(), InvalidOption>,
 }
 

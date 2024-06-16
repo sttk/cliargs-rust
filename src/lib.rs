@@ -111,6 +111,8 @@ pub mod errors;
 mod opt_cfg;
 mod parse;
 
+pub mod validators;
+
 pub use opt_cfg::OptCfg;
 pub use opt_cfg::OptCfgParam;
 
