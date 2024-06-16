@@ -3,6 +3,7 @@
 // See the file LICENSE in this distribution for more details.
 
 mod parse;
+mod parse_with;
 
 use crate::errors::InvalidOption;
 
@@ -80,7 +81,10 @@ where
             }
 
             if i == arg.len() {
-                if take_args(arg) && i_arg < args.len() - 1 {}
+                if take_args(arg) && i_arg < args.len() - 1 {
+                    prev_opt_taking_args = arg;
+                    continue 'L0;
+                }
                 match collect_opts(arg, None) {
                     Err(err) => {
                         if first_err == None {
@@ -166,10 +170,12 @@ where
     }
 }
 
+#[inline]
 fn is_allowed_character(ch: char) -> bool {
     ch == '-' || ch.is_ascii_alphabetic() || ch.is_ascii_digit()
 }
 
+#[inline]
 fn is_allowed_first_character(ch: char) -> bool {
     ch.is_ascii_alphabetic()
 }
