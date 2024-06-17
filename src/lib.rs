@@ -21,7 +21,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cliargs = "0.1.0"
+//! cliargs = "0.2.0"
 //! ```
 //!
 //! ## Usage
