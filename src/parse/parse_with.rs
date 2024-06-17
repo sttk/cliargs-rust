@@ -22,6 +22,40 @@ impl<'a> Cmd<'a> {
     /// basically.
     /// An option configuration has fields: `store_key`, `names`, `has_arg`,
     /// `is_array`, `defaults`, `desc`, `arg_in_help`, and `validator`.
+    ///
+    /// ```
+    /// use cliargs::{Cmd, OptCfg};
+    /// use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
+    /// use cliargs::validators::validate_number;
+    /// use cliargs::errors::InvalidOption;
+    ///
+    /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    /// let opt_cfgs = vec![
+    ///     OptCfg::with(&[
+    ///         names(&["foo-bar"]),
+    ///         desc("This is description of foo-bar."),
+    ///     ]),
+    ///     OptCfg::with(&[
+    ///         names(&["baz", "z"]),
+    ///         has_arg(true),
+    ///         defaults(&["1"]),
+    ///         desc("This is description of baz."),
+    ///         arg_in_help("<num>"),
+    ///         validator(validate_number::<u32>),
+    ///     ]),
+    /// ];
+    ///
+    /// match cmd.parse_with(&opt_cfgs) {
+    ///     Ok(_) => { /* ... */ },
+    ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
+    ///     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionNeedsArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionTakesNoArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionIsNotArray { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
+    ///     Err(err) => panic!("Invalid option: {}", err.option()),
+    /// }
+    /// ```
     pub fn parse_with(&mut self, opt_cfgs: &[OptCfg]) -> Result<(), InvalidOption> {
         let mut cfg_map = HashMap::<&str, usize>::new();
         let mut opt_map = HashMap::<&str, ()>::new();

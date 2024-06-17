@@ -27,6 +27,20 @@ impl<'a> Cmd<'a> {
     /// Since the results of parsing are stored into this `Cmd` instance, this
     /// method returns a [Result] which contains an unit value (`()`) if
     /// succeeding, or a `errors::InvalidOption` if failing.
+    ///
+    /// ```rust
+    /// use cliargs::Cmd;
+    /// use cliargs::errors::InvalidOption;
+    ///
+    /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    /// match cmd.parse() {
+    ///     Ok(_) => { /* ... */ },
+    ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+    ///         panic!("Option contains invalid character: {option}");
+    ///     },
+    ///     Err(err) => panic!("Invalid option: {}", err.option()),
+    /// }
+    /// ```
     pub fn parse(&mut self) -> Result<(), InvalidOption> {
         let collect_args = |arg| {
             self.args.push(arg);
