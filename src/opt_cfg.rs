@@ -322,7 +322,7 @@ mod tests_of_opt_cfg {
                 names: vec!["foo-bar".to_string(), "baz".to_string()],
                 has_arg: true,
                 is_array: true,
-                defaults: Some(vec!["123".to_string(), "456".to_string()]),
+                defaults: Some(vec![123.to_string(), 456.to_string()]),
                 desc: "option description".to_string(),
                 arg_in_help: "<num>".to_string(),
                 validator: |_, _, _| Ok(()),
