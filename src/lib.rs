@@ -11,6 +11,7 @@
 //!     - This library doesn't support numeric short option.
 //!     - This library supports not `-ofoo` but `-o=foo` as an alternative to
 //!       `-o foo` for short option.
+//! - Supports parsing with option configurations.
 //!
 //! [posix]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
 //! [gnu]: https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html
@@ -150,17 +151,23 @@
 //!
 //! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
 //! let opt_cfgs = vec![
-//!     OptCfg::with(&[
-//!         names(&["foo-bar"]),
-//!         desc("This is description of foo-bar."),
-//!     ]),
+//!     OptCfg {
+//!         store_key: "foo_bar".to_string(),
+//!         names: vec!["foo-bar".to_string(), "f".to_string()],
+//!         has_arg: true,
+//!         is_array: false,
+//!         defaults: Some(vec![123.to_string()]),
+//!         desc: "This is description of foo-bar.".to_string(),
+//!         arg_in_help: "<num>".to_string(),
+//!         validator: validate_number::<u64>,
+//!     },
 //!     OptCfg::with(&[
 //!         names(&["baz", "z"]),
 //!         has_arg(true),
 //!         defaults(&["1"]),
 //!         desc("This is description of baz."),
 //!         arg_in_help("<num>"),
-//!         validator(validate_number::<u32>),
+//!         validator(validate_number::<u64>),
 //!     ]),
 //! ];
 //!
@@ -182,6 +189,7 @@ pub mod errors;
 mod opt_cfg;
 mod parse;
 
+/// Function pointers for validating an option argument.
 pub mod validators;
 
 pub use opt_cfg::OptCfg;
