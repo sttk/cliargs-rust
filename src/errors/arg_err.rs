@@ -8,15 +8,15 @@ use std::fmt;
 
 /// The enum type for errors of `OsString` arguments.
 ///
-/// The variants of this enum indicates errors that can occur when operating
-/// command line arguments represented by `OsString`.
+/// The variants of this enum indicates errors that can occur when operating command line arguments
+/// represented by `OsString`.
 #[derive(Debug, PartialEq)]
 pub enum InvalidOsArg {
-    /// The enum variant which indicates that at least one `OsString` value in
-    /// the command line arguments is invalid Unicode.
+    /// The enum variant which indicates that at least one `OsString` value in the command line
+    /// arguments is invalid Unicode.
     OsArgsContainInvalidUnicode {
         /// The index of the invalid argument.
-        /// The argument of which index is zero is the command path.
+        /// The argument at the index zero is the command path.
         index: usize,
         /// The `OsString` value of the invalid argument.
         os_arg: ffi::OsString,
@@ -28,7 +28,8 @@ impl fmt::Display for InvalidOsArg {
         match self {
             InvalidOsArg::OsArgsContainInvalidUnicode { index, os_arg } => write!(
                 f,
-                "The command line arguments contains invalid unicode (index: {}, arguments: \"{}\")",
+                "The command line arguments contains invalid unicode (index: {}, \
+                 arguments: \"{}\")",
                 index,
                 String::from_utf8_lossy(os_arg.as_encoded_bytes()).escape_debug(),
             ),
@@ -38,7 +39,7 @@ impl fmt::Display for InvalidOsArg {
 
 impl error::Error for InvalidOsArg {}
 
-#[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on Windows
+#[cfg(not(windows))] // Because OsStr is valid WTF8 and OsString is valid WTF16 on Windows
 #[cfg(test)]
 mod tests_of_invalid_os_arg {
     use super::*;
@@ -62,8 +63,16 @@ mod tests_of_invalid_os_arg {
             match result {
                 Ok(_) => assert!(false),
                 Err(ref err) => {
-                    assert_eq!(format!("{err}"), "The command line arguments contains invalid unicode (index: 12, arguments: \"Hello �World\")");
-                    assert_eq!(format!("{err:?}"), "OsArgsContainInvalidUnicode { index: 12, os_arg: \"Hello \\xF0\\x90\\x80World\" }");
+                    assert_eq!(
+                        format!("{err}"),
+                        "The command line arguments contains invalid unicode (index: 12, \
+                         arguments: \"Hello �World\")"
+                    );
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "OsArgsContainInvalidUnicode { index: 12, os_arg: \"Hello \
+                         \\xF0\\x90\\x80World\" }"
+                    );
                 }
             }
 
@@ -100,7 +109,11 @@ mod tests_of_invalid_os_arg {
             match result {
                 Ok(_) => assert!(false),
                 Err(ref err) => {
-                    assert_eq!(format!("{err:?}"), "OsArgsContainInvalidUnicode { index: 12, os_arg: \"Hello \\xF0\\x90\\x80World\" }");
+                    assert_eq!(
+                        format!("{err:?}"),
+                        "OsArgsContainInvalidUnicode { index: 12, os_arg: \"Hello \
+                         \\xF0\\x90\\x80World\" }"
+                    );
                 }
             }
         }
@@ -119,7 +132,11 @@ mod tests_of_invalid_os_arg {
             match result {
                 Ok(_) => assert!(false),
                 Err(ref err) => {
-                    assert_eq!(format!("{err}"), "The command line arguments contains invalid unicode (index: 12, arguments: \"Hello �World\")");
+                    assert_eq!(
+                        format!("{err}"),
+                        "The command line arguments contains invalid unicode (index: 12, \
+                        arguments: \"Hello �World\")"
+                    );
                 }
             }
         }

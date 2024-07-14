@@ -7,27 +7,26 @@ use std::fmt;
 
 /// The enum type for errors of options or option arguments.
 ///
-/// This enum type has `option()` method, which makes it possible to handle
-/// option-related errors in a unified manner.
+/// This enum type has `option()` method, which makes it possible to handle option-related errors
+/// in a unified manner.
 #[derive(Debug, PartialEq)]
 pub enum InvalidOption {
     /// Indicates that the name of an option is using invalid characters.
-    /// This error occurs if the name contains symbols or starts with a symbol
-    /// or number.
+    /// This error occurs if the name contains symbols or starts with a symbol or number.
     OptionContainsInvalidChar {
         /// The option name that caused this error.
         option: String,
     },
 
-    /// Indicates that the option with the specified name does not exist in the
-    /// option configurations.
+    /// Indicates that the option with the specified name does not exist in the option
+    /// configurations.
     UnconfiguredOption {
         /// The option name that caused this error.
         option: String,
     },
 
-    /// Indicates that the option requires arguments in the configuration, but
-    /// no argument is specified.
+    /// Indicates that the option requires arguments in the configuration, but no argument is
+    /// specified.
     OptionNeedsArg {
         /// The option name that caused this error.
         option: String,
@@ -36,8 +35,8 @@ pub enum InvalidOption {
         store_key: String,
     },
 
-    /// Indicates that the option is not suppoesed to take an argument in the
-    /// configuration, but an argument is specified.
+    /// Indicates that the option is not suppoesed to take an argument in the configuration, but
+    /// an argument is specified.
     OptionTakesNoArg {
         /// The option name that caused this error.
         option: String,
@@ -46,8 +45,8 @@ pub enum InvalidOption {
         store_key: String,
     },
 
-    /// Indicates that the option is supposed to take one argument in the
-    /// configuration, but multiple arguments are specified.
+    /// Indicates that the option is supposed to take one argument in the configuration, but
+    /// multiple arguments are specified.
     OptionIsNotArray {
         /// The option name that caused this error.
         option: String,
@@ -56,8 +55,7 @@ pub enum InvalidOption {
         store_key: String,
     },
 
-    /// Indicates that there are duplicated store keys among multiple
-    /// configurations.
+    /// Indicates that there are duplicated store keys among multiple configurations.
     StoreKeyIsDuplicated {
         /// The store key that caused this error.
         store_key: String,
@@ -66,9 +64,9 @@ pub enum InvalidOption {
         name: String,
     },
 
-    /// Indicates that an option configuration contradicts that the option can
-    /// take multiple arguments (`.is_array == true`) though it does not
-    /// take option arguments (`.has_arg == false`).
+    /// Indicates that an option configuration contradicts that the option can take multiple
+    /// arguments (`.is_array == true`) though it does not take option arguments
+    /// (`.has_arg == false`).
     ConfigIsArrayButHasNoArg {
         /// The store key of the option configuration that caused this error.
         store_key: String,
@@ -77,9 +75,8 @@ pub enum InvalidOption {
         name: String,
     },
 
-    /// Indicates that an option configuration contradicts that the default
-    /// arguments (`.defaults`) is not empty though it does not take option
-    /// arguments (`.has_arg == false`).
+    /// Indicates that an option configuration contradicts that the default arguments (`.defaults`)
+    /// is not empty though it does not take option arguments (`.has_arg == false`).
     ConfigHasDefaultsButHasNoArg {
         /// The store key of the option configuration that caused this error.
         store_key: String,
@@ -88,8 +85,7 @@ pub enum InvalidOption {
         name: String,
     },
 
-    /// Indicates that there are duplicated opton names among the option
-    /// configurations.
+    /// Indicates that there are duplicated opton names among the option configurations.
     OptionNameIsDuplicated {
         /// The store key of the option configuration that caused this error.
         store_key: String,
@@ -98,8 +94,8 @@ pub enum InvalidOption {
         name: String,
     },
 
-    /// Indicates that the option argument is invalidated by the validator
-    /// in the option configuration.
+    /// Indicates that the option argument is invalidated by the validator in the option
+    /// configuration.
     OptionArgIsInvalid {
         /// The store key of the option configuration that caused this error.
         store_key: String,
@@ -1051,7 +1047,8 @@ mod tests_of_invalid_option {
                 Err(err) => {
                     assert_eq!(
                         format!("{err:?}"),
-                        "OptionArgIsInvalid { store_key: \"fooBar\", option: \"foo-bar\", opt_arg: \"x123\", details: \"illegal number format.\" }",
+                        "OptionArgIsInvalid { store_key: \"fooBar\", option: \"foo-bar\", \
+                         opt_arg: \"x123\", details: \"illegal number format.\" }",
                     );
                 }
             }
@@ -1070,7 +1067,8 @@ mod tests_of_invalid_option {
                 Err(err) => {
                     assert_eq!(
                         format!("{err}"),
-                        "The option argument \"x123\" is invalid because: illegal number format. (option: \"foo-bar\")",
+                        "The option argument \"x123\" is invalid because: illegal number format. \
+                         (option: \"foo-bar\")",
                     );
                 }
             }
