@@ -2,18 +2,18 @@
 // This program is free software under MIT License.
 // See the file LICENSE in this distribution for more details.
 
+pub mod validators;
+
 use crate::errors::InvalidOption;
 use std::fmt;
 
 /// Represents an option configuration for how to parse command line arguments.
 ///
-/// And this is also used when creating the help text for command line
-/// arguments.
+/// And this is also used when creating the help text for command line arguments.
 pub struct OptCfg {
-    /// Is the key to store option value(s) in the option map in a `Cmd`
-    /// instance.
-    /// If this key is not specified or empty, the first element of the `names`
-    /// field is used instead.
+    /// Is the key to store option value(s) in the option map in a `Cmd` instance.
+    /// If this key is not specified or empty, the first element of the `names` field is used
+    /// instead.
     pub store_key: String,
 
     /// Is the vector for specifying the option name and the aliases.
@@ -26,17 +26,15 @@ pub struct OptCfg {
     /// Is the flag which allow the option to take multiple option arguments.
     pub is_array: bool,
 
-    /// Is the `Option` of the vector to specify default value(s) for when the
-    /// comand option is not given in command line arguments.
+    /// Is the `Option` of the vector to specify default value(s) for when the comand option is not
+    /// given in command line arguments.
     /// If this value is `None`, the default value(s) is not specified.
     pub defaults: Option<Vec<String>>,
 
-    /// Is the string field to set the description of the option which is used
-    /// in a help text.
+    /// Is the string field to set the description of the option which is used in a help text.
     pub desc: String,
 
-    /// Is the field to set a display string of the option argument(s) in a
-    /// help text.
+    /// Is the field to set a display string of the option argument(s) in a help text.
     /// An example of the display is like: `-o, --option <value>`.
     pub arg_in_help: String,
 
@@ -135,8 +133,7 @@ impl<'a> OptCfgInit<'a> {
     }
 }
 
-/// Enables to create a `OptCfg` instance in a manner similar to named
-/// parameters.
+/// Enables to create a `OptCfg` instance in a manner similar to named parameters.
 #[allow(non_camel_case_types)]
 pub enum OptCfgParam<'a> {
     /// Holds the value for `OptCfg#store_key`.
@@ -328,7 +325,12 @@ mod tests_of_opt_cfg {
                 validator: |_, _, _| Ok(()),
             };
 
-            assert_eq!(format!("{cfg:?}"), "OptCfg { store_key: \"fooBar\", names: [\"foo-bar\", \"baz\"], has_arg: true, is_array: true, defaults: Some([\"123\", \"456\"]), desc: \"option description\", arg_in_help: \"<num>\" }");
+            assert_eq!(
+                format!("{cfg:?}"),
+                "OptCfg { store_key: \"fooBar\", names: [\"foo-bar\", \"baz\"], has_arg: true, \
+                 is_array: true, defaults: Some([\"123\", \"456\"]), desc: \"option description\", \
+                 arg_in_help: \"<num>\" }"
+            );
         }
     }
 }

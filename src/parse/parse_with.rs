@@ -11,17 +11,15 @@ use std::collections::HashMap;
 impl<'a> Cmd<'a> {
     /// Parses command line arguments with option configurations.
     ///
-    /// This method divides command line arguments to command arguments and
-    /// options.
+    /// This method divides command line arguments to command arguments and options.
     /// And an option consists of a name and an option argument.
     /// Options are divided to long format options and short format options.
-    /// About long/short format options, since they are same with `parse`
-    /// method, see the comment of that method.
+    /// About long/short format options, since they are same with `parse` method, see the comment
+    /// of that method.
     ///
-    /// This method allows only options declared in option configurations,
-    /// basically.
-    /// An option configuration has fields: `store_key`, `names`, `has_arg`,
-    /// `is_array`, `defaults`, `desc`, `arg_in_help`, and `validator`.
+    /// This method allows only options declared in option configurations, basically.
+    /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`, `defaults`,
+    /// `desc`, `arg_in_help`, and `validator`.
     ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};

@@ -187,30 +187,29 @@
 pub mod errors;
 
 mod opt_cfg;
-mod parse;
-
-/// Function pointers for validating an option argument.
-pub mod validators;
-
 pub use opt_cfg::OptCfg;
 pub use opt_cfg::OptCfgParam;
 
+/// Function pointers for validating an option argument.
+pub use opt_cfg::validators;
+
+mod parse;
+
 use std::collections::HashMap;
 use std::env;
-use std::ffi::OsString;
+use std::ffi;
 use std::fmt;
 use std::mem;
 use std::path;
 
 /// Parses command line arguments and stores them.
 ///
-/// The results of parsing are stored by separating into command name,
-/// command arguments, options, and option arguments.
+/// The results of parsing are stored by separating into command name, command arguments, options,
+/// and option arguments.
 ///
-/// These values are retrieved as string slices with the same lifetime as this
-/// `Cmd` instance.
-/// Therefore, if you want to use those values for a longer period, it is
-/// needed to convert them to [String]s.
+/// These values are retrieved as string slices with the same lifetime as this `Cmd` instance.
+/// Therefore, if you want to use those values for a longer period, it is needed to convert them
+/// to [String]s.
 pub struct Cmd<'a> {
     name: &'a str,
     args: Vec<&'a str>,
@@ -239,22 +238,21 @@ impl fmt::Debug for Cmd<'_> {
 }
 
 impl<'a> Cmd<'a> {
-    /// Creates a `Cmd` instance with command line arguments obtained from
-    /// [std::env::args_os].
+    /// Creates a `Cmd` instance with command line arguments obtained from [std::env::args_os].
     ///
-    /// Since [std::env::args_os] returns a vector of [OsString] and they can
-    /// contain invalid unicode data, the return value of this funciton is
-    /// [Result] of `Cmd` or `errors::InvalidOsArg`.
+    /// Since [std::env::args_os] returns a vector of [OsString] and they can contain invalid
+    /// unicode data, the return value of this funciton is [Result] of `Cmd` or
+    /// `errors::InvalidOsArg`.
     pub fn new() -> Result<Cmd<'a>, errors::InvalidOsArg> {
         Self::with_os_strings(env::args_os())
     }
 
     /// Creates a `Cmd` instance with the specified iterator of [OsString]s.
     ///
-    /// [OsString]s can contain invalid unicode data, the return value of
-    /// this function is [Result] of `Cmd` or `errors::InvalidOsArg`.
+    /// [OsString]s can contain invalid unicode data, the return value of this function is
+    /// [Result] of `Cmd` or `errors::InvalidOsArg`.
     pub fn with_os_strings(
-        osargs: impl IntoIterator<Item = OsString>,
+        osargs: impl IntoIterator<Item = ffi::OsString>,
     ) -> Result<Cmd<'a>, errors::InvalidOsArg> {
         let osarg_iter = osargs.into_iter();
         let (size, _) = osarg_iter.size_hint();
@@ -358,8 +356,8 @@ impl<'a> Cmd<'a> {
 
     /// Returns the command name.
     ///
-    /// This name is base name extracted from the command path string slice,
-    /// which is the first element of the command line arguments.
+    /// This name is base name extracted from the command path string slice, which is the first
+    /// element of the command line arguments.
     pub fn name(&'a self) -> &'a str {
         self.name
     }
@@ -378,12 +376,10 @@ impl<'a> Cmd<'a> {
 
     /// Returns the option argument with the specified name.
     ///
-    /// If the option has multiple arguments, this method returns the first
-    /// argument.
+    /// If the option has multiple arguments, this method returns the first argument.
     ///
     /// Since the option may not be specified in the command line arguments,
-    /// the return value of this method  is an [Option] of an option argument
-    /// or [None].
+    /// the return value of this method  is an [Option] of an option argument or [None].
     pub fn opt_arg(&'a self, name: &str) -> Option<&'a str> {
         if let Some(opt_vec) = self.opts.get(name) {
             if opt_vec.len() > 0 {
@@ -395,12 +391,10 @@ impl<'a> Cmd<'a> {
 
     /// Returns the option arguments with the specified name.
     ///
-    /// If the option has one or multiple arguments, this method returns an
-    /// array of the arguments.
+    /// If the option has one or multiple arguments, this method returns an array of the arguments.
     ///
-    /// Since the option may not be specified in the command line arguments,
-    /// the return value of this method is an [Option] of option arguments or
-    /// [None].
+    /// Since the option may not be specified in the command line arguments, the return value of
+    /// this method is an [Option] of option arguments or [None].
     pub fn opt_args(&'a self, name: &str) -> Option<&'a [&'a str]> {
         match self.opts.get(name) {
             Some(vec) => Some(&vec),
@@ -515,7 +509,7 @@ mod tests_of_cmd {
             assert_eq!(cmd.name(), "app");
         }
 
-        #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
+        #[cfg(not(windows))] // Because OsStr is valid WTF8 and OsString is valid WTF16 on Windows
         #[test]
         fn should_fail_because_os_args_contain_invalid_unicode() {
             let bad_arg = b"bar\xFFbaz";
@@ -536,7 +530,7 @@ mod tests_of_cmd {
             }
         }
 
-        #[cfg(not(windows))] // Because basically OsStr is valid WTF8 and OsString is valid WTF16 on windows
+        #[cfg(not(windows))] // Because OsStr is valid WTF8 and OsString is valid WTF16 on Windows
         #[test]
         fn should_fail_because_command_name_contains_invalid_unicode() {
             let bad_arg = b"bar\xFFbaz";
