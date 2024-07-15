@@ -22,6 +22,10 @@ impl<'a> Cmd<'a> {
     /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`,
     /// `defaults`, `desc`, `arg_in_help`, and `validator`.
     ///
+    /// The ownership of the vector of option configurations which is passed as an argument of
+    /// this method is moved to this method and set to the public field `cfgs` of [Cmd] instance.
+    /// If you want to access the option configurations after parsing, get them from this field.
+    ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};
     /// use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};

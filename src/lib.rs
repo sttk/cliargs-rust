@@ -194,6 +194,10 @@ pub use opt_cfg::OptCfgParam;
 pub use opt_cfg::validators;
 
 mod parse;
+pub use parse::OptStore;
+
+extern crate cliargs_derive;
+pub use cliargs_derive::OptStore;
 
 use std::collections::HashMap;
 use std::env;

@@ -1,11 +1,11 @@
 [package]
-name = "cliargs"
-version = "0.2.0"
+name = "cliargs_derive"
+version = "0.1.0"
 authors = ["Takayuki Sato <sttk.xslet@gmail.com>"]
 edition = "2021"
 rust-version = "1.74.1"
-description = "Parses command line arguments and prints the help."
-documentation = "https://docs.rs/cliargs"
+description = ""
+documentation = "https://docs.rs/cliargs_derive"
 readme = "README.md"
 repository = "https://github.com/sttk/cliargs-rust"
 license = "MIT"
@@ -15,10 +15,9 @@ categories = ["command-line interface"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cliargs_derive = { version = "0.1", path = "cliargs_derive" }
+proc-macro2 = "1.0"
+syn = "2.0"
+quote = "1.0"
 
-[dev-dependencies]
-trybuild = "1.0"
-
-[workspace]
-members = ["cliargs_derive"]
+[lib]
+proc-macro = true

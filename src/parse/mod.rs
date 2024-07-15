@@ -5,6 +5,9 @@
 mod parse;
 mod parse_with;
 
+mod parse_for;
+pub use parse_for::OptStore;
+
 use crate::errors::InvalidOption;
 
 fn parse_args<'a, F1, F2, F3>(
@@ -28,7 +31,7 @@ where
         } else if !prev_opt_taking_args.is_empty() {
             match collect_opts(prev_opt_taking_args, Some(arg)) {
                 Err(err) => {
-                    if first_err == None {
+                    if first_err.is_none() {
                         first_err = Some(err);
                     }
                     continue 'L0;
@@ -50,7 +53,7 @@ where
                     if ch == '=' {
                         match collect_opts(&arg[0..i], Some(&arg[i + 1..])) {
                             Err(err) => {
-                                if first_err == None {
+                                if first_err.is_none() {
                                     first_err = Some(err);
                                 }
                                 continue 'L0;
@@ -60,7 +63,7 @@ where
                         break;
                     }
                     if !is_allowed_character(ch) {
-                        if first_err == None {
+                        if first_err.is_none() {
                             first_err = Some(InvalidOption::OptionContainsInvalidChar {
                                 option: String::from(arg),
                             });
@@ -69,7 +72,7 @@ where
                     }
                 } else {
                     if !is_allowed_first_character(ch) {
-                        if first_err == None {
+                        if first_err.is_none() {
                             first_err = Some(InvalidOption::OptionContainsInvalidChar {
                                 option: String::from(arg),
                             });
@@ -87,7 +90,7 @@ where
                 }
                 match collect_opts(arg, None) {
                     Err(err) => {
-                        if first_err == None {
+                        if first_err.is_none() {
                             first_err = Some(err);
                         }
                         continue 'L0;
@@ -111,7 +114,7 @@ where
                         if !name.is_empty() {
                             match collect_opts(name, Some(&arg[i + 1..])) {
                                 Err(err) => {
-                                    if first_err == None {
+                                    if first_err.is_none() {
                                         first_err = Some(err);
                                     }
                                 }
@@ -123,7 +126,7 @@ where
                     if !name.is_empty() {
                         match collect_opts(name, None) {
                             Err(err) => {
-                                if first_err == None {
+                                if first_err.is_none() {
                                     first_err = Some(err);
                                 }
                             }
@@ -132,7 +135,7 @@ where
                     }
                 }
                 if !is_allowed_first_character(ch) {
-                    if first_err == None {
+                    if first_err.is_none() {
                         first_err = Some(InvalidOption::OptionContainsInvalidChar {
                             option: String::from(&arg[i..i + 1]),
                         });
@@ -150,7 +153,7 @@ where
                 } else {
                     match collect_opts(name, None) {
                         Err(err) => {
-                            if first_err == None {
+                            if first_err.is_none() {
                                 first_err = Some(err);
                             }
                             continue 'L0;
