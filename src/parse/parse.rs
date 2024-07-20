@@ -51,8 +51,13 @@ impl<'a> Cmd<'a> {
 
         let take_args = |_arg: &str| false;
 
-        if !self._arg_refs.is_empty() {
-            match parse_args(&self._arg_refs[1..], collect_args, collect_opts, take_args) {
+        if !self._leaked_str.is_empty() {
+            match parse_args(
+                &self._leaked_str[1..],
+                collect_args,
+                collect_opts,
+                take_args,
+            ) {
                 Ok(_) => {}
                 Err(err) => return Err(err),
             }
