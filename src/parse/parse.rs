@@ -51,9 +51,9 @@ impl<'a> Cmd<'a> {
 
         let take_args = |_arg: &str| false;
 
-        if !self._leaked_str.is_empty() {
+        if !self._leaked_strs.is_empty() {
             match parse_args(
-                &self._leaked_str[1..],
+                &self._leaked_strs[1..],
                 collect_args,
                 collect_opts,
                 take_args,
