@@ -218,12 +218,12 @@ pub struct Cmd<'a> {
     /// The option configurations which is used to parse command line arguments.
     pub cfgs: Vec<OptCfg>,
 
-    _leaked_str: Vec<&'a str>,
+    _leaked_strs: Vec<&'a str>,
 }
 
 impl<'a> Drop for Cmd<'a> {
     fn drop(&mut self) {
-        for str in &self._leaked_str {
+        for str in &self._leaked_strs {
             let boxed = unsafe { Box::from_raw(*str as *const str as *mut str) };
             mem::drop(boxed);
         }
@@ -259,7 +259,7 @@ impl<'a> Cmd<'a> {
     ) -> Result<Cmd<'a>, errors::InvalidOsArg> {
         let osarg_iter = osargs.into_iter();
         let (size, _) = osarg_iter.size_hint();
-        let mut _leaked_str = Vec::with_capacity(size);
+        let mut _leaked_strs = Vec::with_capacity(size);
 
         let cmd_name_start: usize;
 
@@ -279,7 +279,7 @@ impl<'a> Cmd<'a> {
             match osarg.into_string() {
                 Ok(string) => {
                     let str: &'a str = string.leak();
-                    _leaked_str.push(str);
+                    _leaked_strs.push(str);
                     cmd_name_start = str.len() - base_len;
                 }
                 Err(osstring) => {
@@ -295,10 +295,10 @@ impl<'a> Cmd<'a> {
                 match osarg.into_string() {
                     Ok(string) => {
                         let str: &'a str = string.leak();
-                        _leaked_str.push(str);
+                        _leaked_strs.push(str);
                     }
                     Err(osstring) => {
-                        for str in _leaked_str {
+                        for str in _leaked_strs {
                             let boxed = unsafe { Box::from_raw(str as *const str as *mut str) };
                             mem::drop(boxed);
                         }
@@ -310,16 +310,16 @@ impl<'a> Cmd<'a> {
                 }
             }
         } else {
-            _leaked_str.push("");
+            _leaked_strs.push("");
             cmd_name_start = 0;
         }
 
         Ok(Cmd {
-            name: &_leaked_str[0][cmd_name_start..],
+            name: &_leaked_strs[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
-            _leaked_str,
+            _leaked_strs,
         })
     }
 
@@ -327,35 +327,35 @@ impl<'a> Cmd<'a> {
     pub fn with_strings(args: impl IntoIterator<Item = String>) -> Cmd<'a> {
         let arg_iter = args.into_iter();
         let (size, _) = arg_iter.size_hint();
-        let mut _leaked_str = Vec::with_capacity(size);
+        let mut _leaked_strs = Vec::with_capacity(size);
 
         for arg in arg_iter {
             let str: &'a str = arg.leak();
-            _leaked_str.push(str);
+            _leaked_strs.push(str);
         }
 
         let cmd_name_start: usize;
 
-        if _leaked_str.len() > 0 {
-            let path = path::Path::new(_leaked_str[0]);
+        if _leaked_strs.len() > 0 {
+            let path = path::Path::new(_leaked_strs[0]);
             let mut base_len = 0;
             if let Some(base_os) = path.file_name() {
                 if let Some(base_str) = base_os.to_str() {
                     base_len = base_str.len();
                 }
             }
-            cmd_name_start = _leaked_str[0].len() - base_len;
+            cmd_name_start = _leaked_strs[0].len() - base_len;
         } else {
-            _leaked_str.push("");
+            _leaked_strs.push("");
             cmd_name_start = 0;
         };
 
         Cmd {
-            name: &_leaked_str[0][cmd_name_start..],
+            name: &_leaked_strs[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
-            _leaked_str,
+            _leaked_strs,
         }
     }
 
@@ -419,9 +419,9 @@ mod tests_of_cmd {
         fn should_create_a_new_instance() {
             let cmd = Cmd::new().unwrap();
             println!("cmd = {cmd:?}");
-            println!("cmd._leaked_str = {:?}", cmd._leaked_str);
+            println!("cmd._leaked_strs = {:?}", cmd._leaked_strs);
             assert!(cmd.name().starts_with("cliargs-"));
-            assert!(cmd._leaked_str.len() > 0);
+            assert!(cmd._leaked_strs.len() > 0);
         }
     }
 
@@ -436,12 +436,12 @@ mod tests_of_cmd {
                 "bar".to_string(),
             ]);
 
-            cmd.args.push(cmd._leaked_str[2]);
+            cmd.args.push(cmd._leaked_strs[2]);
             cmd.opts
-                .insert(&cmd._leaked_str[1][2..], Vec::with_capacity(0));
+                .insert(&cmd._leaked_strs[1][2..], Vec::with_capacity(0));
 
             println!("cmd = {cmd:?}");
-            println!("cmd._leaked_str = {:?}", cmd._leaked_str);
+            println!("cmd._leaked_strs = {:?}", cmd._leaked_strs);
             assert_eq!(cmd.name(), "app");
         }
 
@@ -642,13 +642,13 @@ mod tests_of_cmd {
                 "corge".to_string(),
             ]);
 
-            cmd.args.push(cmd._leaked_str[6]);
-            cmd.args.push(cmd._leaked_str[7]);
+            cmd.args.push(cmd._leaked_strs[6]);
+            cmd.args.push(cmd._leaked_strs[7]);
             cmd.opts
-                .insert(&cmd._leaked_str[1][2..], Vec::with_capacity(0));
+                .insert(&cmd._leaked_strs[1][2..], Vec::with_capacity(0));
             cmd.opts.insert(
-                &cmd._leaked_str[2][2..],
-                vec![&cmd._leaked_str[3], &cmd._leaked_str[5]],
+                &cmd._leaked_strs[2][2..],
+                vec![&cmd._leaked_strs[3], &cmd._leaked_strs[5]],
             );
 
             assert_eq!(cmd.args(), ["quux", "corge"]);
@@ -667,13 +667,13 @@ mod tests_of_cmd {
                 "corge".to_string(),
             ]);
 
-            cmd.args.push(cmd._leaked_str[6]);
-            cmd.args.push(cmd._leaked_str[7]);
+            cmd.args.push(cmd._leaked_strs[6]);
+            cmd.args.push(cmd._leaked_strs[7]);
             cmd.opts
-                .insert(&cmd._leaked_str[1][2..], Vec::with_capacity(0));
+                .insert(&cmd._leaked_strs[1][2..], Vec::with_capacity(0));
             cmd.opts.insert(
-                &cmd._leaked_str[2][2..],
-                vec![&cmd._leaked_str[3], &cmd._leaked_str[5]],
+                &cmd._leaked_strs[2][2..],
+                vec![&cmd._leaked_strs[3], &cmd._leaked_strs[5]],
             );
 
             assert_eq!(cmd.has_opt("foo"), true);
@@ -694,13 +694,13 @@ mod tests_of_cmd {
                 "corge".to_string(),
             ]);
 
-            cmd.args.push(cmd._leaked_str[6]);
-            cmd.args.push(cmd._leaked_str[7]);
+            cmd.args.push(cmd._leaked_strs[6]);
+            cmd.args.push(cmd._leaked_strs[7]);
             cmd.opts
-                .insert(&cmd._leaked_str[1][2..], Vec::with_capacity(0));
+                .insert(&cmd._leaked_strs[1][2..], Vec::with_capacity(0));
             cmd.opts.insert(
-                &cmd._leaked_str[2][2..],
-                vec![&cmd._leaked_str[3], &cmd._leaked_str[5]],
+                &cmd._leaked_strs[2][2..],
+                vec![&cmd._leaked_strs[3], &cmd._leaked_strs[5]],
             );
 
             assert_eq!(cmd.opt_arg("foo"), None);
@@ -721,13 +721,13 @@ mod tests_of_cmd {
                 "corge".to_string(),
             ]);
 
-            cmd.args.push(cmd._leaked_str[6]);
-            cmd.args.push(cmd._leaked_str[7]);
+            cmd.args.push(cmd._leaked_strs[6]);
+            cmd.args.push(cmd._leaked_strs[7]);
             cmd.opts
-                .insert(&cmd._leaked_str[1][2..], Vec::with_capacity(0));
+                .insert(&cmd._leaked_strs[1][2..], Vec::with_capacity(0));
             cmd.opts.insert(
-                &cmd._leaked_str[2][2..],
-                vec![&cmd._leaked_str[3], &cmd._leaked_str[5]],
+                &cmd._leaked_strs[2][2..],
+                vec![&cmd._leaked_strs[3], &cmd._leaked_strs[5]],
             );
 
             assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));

@@ -131,7 +131,7 @@ impl<'a> Cmd<'a> {
             }
         }
 
-        if self._leaked_str.is_empty() {
+        if self._leaked_strs.is_empty() {
             return Ok(());
         }
 
@@ -225,14 +225,14 @@ impl<'a> Cmd<'a> {
         };
 
         let result = parse_args(
-            &self._leaked_str[1..],
+            &self._leaked_strs[1..],
             collect_args,
             collect_opts,
             take_args,
         );
 
         for str_ref in str_refs {
-            self._leaked_str.push(str_ref);
+            self._leaked_strs.push(str_ref);
         }
 
         result?;
@@ -252,13 +252,13 @@ impl<'a> Cmd<'a> {
                 if let Some(def_vec) = &cfg.defaults {
                     let string = String::from(store_key);
                     let key: &'a str = string.leak();
-                    self._leaked_str.push(key);
+                    self._leaked_strs.push(key);
                     let vec = self.opts.entry(key).or_insert(Vec::new());
 
                     for def_val in def_vec.iter() {
                         let string = String::from(def_val);
                         let arg: &'a str = string.leak();
-                        self._leaked_str.push(arg);
+                        self._leaked_strs.push(arg);
                         vec.push(arg);
                     }
                 }
