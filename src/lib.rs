@@ -171,7 +171,7 @@
 //!     ]),
 //! ];
 //!
-//! match cmd.parse_with(&opt_cfgs) {
+//! match cmd.parse_with(opt_cfgs) {
 //!     Ok(_) => { /* ... */ },
 //!     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
 //!     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
@@ -214,6 +214,9 @@ pub struct Cmd<'a> {
     name: &'a str,
     args: Vec<&'a str>,
     opts: HashMap<&'a str, Vec<&'a str>>,
+
+    ///
+    pub cfgs: Vec<OptCfg>,
 
     _leaked_str: Vec<&'a str>,
 }
@@ -315,6 +318,7 @@ impl<'a> Cmd<'a> {
             name: &_leaked_str[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
+            cfgs: Vec::new(),
             _leaked_str,
         })
     }
@@ -350,6 +354,7 @@ impl<'a> Cmd<'a> {
             name: &_leaked_str[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
+            cfgs: Vec::new(),
             _leaked_str,
         }
     }

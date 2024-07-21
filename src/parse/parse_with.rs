@@ -7,6 +7,7 @@ use crate::errors::InvalidOption;
 use crate::Cmd;
 use crate::OptCfg;
 use std::collections::HashMap;
+use std::mem;
 
 impl<'a> Cmd<'a> {
     /// Parses command line arguments with option configurations.
@@ -18,8 +19,8 @@ impl<'a> Cmd<'a> {
     /// of that method.
     ///
     /// This method allows only options declared in option configurations, basically.
-    /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`, `defaults`,
-    /// `desc`, `arg_in_help`, and `validator`.
+    /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`,
+    /// `defaults`, `desc`, `arg_in_help`, and `validator`.
     ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};
@@ -43,7 +44,7 @@ impl<'a> Cmd<'a> {
     ///     ]),
     /// ];
     ///
-    /// match cmd.parse_with(&opt_cfgs) {
+    /// match cmd.parse_with(opt_cfgs) {
     ///     Ok(_) => { /* ... */ },
     ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
     ///     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
@@ -54,7 +55,14 @@ impl<'a> Cmd<'a> {
     ///     Err(err) => panic!("Invalid option: {}", err.option()),
     /// }
     /// ```
-    pub fn parse_with(&mut self, opt_cfgs: &[OptCfg]) -> Result<(), InvalidOption> {
+    pub fn parse_with(&mut self, mut opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
+        let result = self._parse_with(&opt_cfgs);
+        mem::swap(&mut opt_cfgs, &mut self.cfgs);
+        result
+    }
+
+    #[inline(always)]
+    fn _parse_with(&mut self, opt_cfgs: &Vec<OptCfg>) -> Result<(), InvalidOption> {
         let mut cfg_map = HashMap::<&str, usize>::new();
         let mut opt_map = HashMap::<&str, ()>::new();
 
@@ -272,7 +280,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -282,6 +290,8 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 0);
     }
 
     #[test]
@@ -290,7 +300,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["/path/to/app".to_string(), "foo-bar".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -300,6 +310,8 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &["foo-bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 0);
     }
 
     #[test]
@@ -308,7 +320,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--foo-bar".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => assert!(false),
             Err(InvalidOption::UnconfiguredOption { option }) => {
                 assert_eq!(option, "foo-bar");
@@ -316,20 +328,13 @@ mod tests_of_parse_with {
             Err(_) => assert!(false),
         }
 
-        let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--foo-bar".to_string()]);
-
-        match cmd.parse_with(&opt_cfgs) {
-            Ok(()) => assert!(false),
-            Err(err) => {
-                assert_eq!(err.option(), "foo-bar");
-            }
-        }
-
         assert_eq!(cmd.name(), "app");
         assert_eq!(cmd.has_opt("foo-bar"), false);
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 0);
     }
 
     #[test]
@@ -338,21 +343,12 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "-f".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => assert!(false),
             Err(InvalidOption::UnconfiguredOption { option }) => {
                 assert_eq!(option, "f");
             }
             Err(_) => assert!(false),
-        }
-
-        let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "-f".to_string()]);
-
-        match cmd.parse_with(&opt_cfgs) {
-            Ok(()) => assert!(false),
-            Err(err) => {
-                assert_eq!(err.option(), "f");
-            }
         }
 
         assert_eq!(cmd.name(), "app");
@@ -363,6 +359,8 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 0);
     }
 
     #[test]
@@ -371,7 +369,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -384,6 +382,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -392,7 +399,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "foo-bar".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -405,6 +412,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &["foo-bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -413,7 +429,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--foo-bar".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -426,6 +442,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -434,7 +459,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -447,6 +472,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -455,7 +489,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(InvalidOption::UnconfiguredOption { option }) => {
                 assert_eq!(option, "bar-foo");
@@ -475,6 +509,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("bar-foo"), false);
         assert_eq!(cmd.opt_arg("bar-foo"), None);
         assert_eq!(cmd.opt_args("bar-foo"), None);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -483,7 +526,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-b".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(InvalidOption::UnconfiguredOption { option }) => {
                 assert_eq!(option, "b");
@@ -503,6 +546,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("b"), false);
         assert_eq!(cmd.opt_arg("b"), None);
         assert_eq!(cmd.opt_args("b"), None);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -514,7 +566,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -531,6 +583,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("bar-foo"), true);
         assert_eq!(cmd.opt_arg("bar-foo"), None);
         assert_eq!(cmd.opt_args("bar-foo"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["*".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -542,7 +610,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-b".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(true),
         }
@@ -559,6 +627,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("b"), true);
         assert_eq!(cmd.opt_arg("b"), None);
         assert_eq!(cmd.opt_args("b"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["*".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -571,7 +655,7 @@ mod tests_of_parse_with {
             "ABC".to_string(),
         ]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -581,6 +665,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), Some("ABC"));
         assert_eq!(cmd.opt_args("foo-bar"), Some(&["ABC"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -589,7 +682,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "ABC".to_string()]);
 
-        match cmd.parse_with(&opt_cfgs) {
+        match cmd.parse_with(opt_cfgs) {
             Ok(()) => {}
             Err(_) => assert!(false),
         }
@@ -599,6 +692,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), Some("ABC"));
         assert_eq!(cmd.opt_args("f"), Some(&["ABC"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -607,7 +709,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -631,6 +733,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -639,24 +750,22 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(err) => {
                 assert_eq!(err.option(), "f");
+                match err {
+                    InvalidOption::OptionNeedsArg {
+                        store_key: sk,
+                        option,
+                    } => {
+                        assert_eq!(sk, "f");
+                        assert_eq!(option, "f");
+                    }
+                    _ => {}
+                }
             }
-        }
-        let result = cmd.parse_with(&opt_cfgs);
-        match result {
-            Ok(()) => assert!(false),
-            Err(InvalidOption::OptionNeedsArg {
-                store_key: sk,
-                option,
-            }) => {
-                assert_eq!(sk, "f");
-                assert_eq!(option, "f");
-            }
-            Err(_) => assert!(false),
         }
 
         assert_eq!(cmd.name(), "app");
@@ -664,6 +773,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -676,7 +794,7 @@ mod tests_of_parse_with {
             "ABC".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -688,26 +806,35 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("foo-bar"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &["ABC"] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar=ABC".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(err) => {
                 assert_eq!(err.option(), "foo-bar");
+                match err {
+                    InvalidOption::OptionTakesNoArg {
+                        store_key: sk,
+                        option,
+                    } => {
+                        assert_eq!(sk, "foo-bar");
+                        assert_eq!(option, "foo-bar");
+                    }
+                    _ => {}
+                }
             }
-        }
-        let result = cmd.parse_with(&opt_cfgs);
-        match result {
-            Ok(()) => assert!(false),
-            Err(InvalidOption::OptionTakesNoArg {
-                store_key: sk,
-                option,
-            }) => {
-                assert_eq!(sk, "foo-bar");
-                assert_eq!(option, "foo-bar");
-            }
-            Err(_) => assert!(false),
         }
 
         assert_eq!(cmd.name(), "app");
@@ -716,10 +843,21 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo-bar".to_string(), "".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -731,26 +869,35 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("foo-bar"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &[""] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar=".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(err) => {
                 assert_eq!(err.option(), "foo-bar");
+                match err {
+                    InvalidOption::OptionTakesNoArg {
+                        store_key: sk,
+                        option,
+                    } => {
+                        assert_eq!(sk, "foo-bar");
+                        assert_eq!(option, "foo-bar");
+                    }
+                    _ => {}
+                }
             }
-        }
-        let result = cmd.parse_with(&opt_cfgs);
-        match result {
-            Ok(()) => assert!(false),
-            Err(InvalidOption::OptionTakesNoArg {
-                store_key: sk,
-                option,
-            }) => {
-                assert_eq!(sk, "foo-bar");
-                assert_eq!(option, "foo-bar");
-            }
-            Err(_) => assert!(false),
         }
 
         assert_eq!(cmd.name(), "app");
@@ -758,6 +905,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -766,7 +922,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "ABC".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -778,26 +934,35 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("f"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &["ABC"] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f=ABC".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(err) => {
                 assert_eq!(err.option(), "f");
+                match err {
+                    InvalidOption::OptionTakesNoArg {
+                        store_key: sk,
+                        option,
+                    } => {
+                        assert_eq!(sk, "f");
+                        assert_eq!(option, "f");
+                    }
+                    _ => {}
+                }
             }
-        }
-        let result = cmd.parse_with(&opt_cfgs);
-        match result {
-            Ok(()) => assert!(false),
-            Err(InvalidOption::OptionTakesNoArg {
-                store_key: sk,
-                option,
-            }) => {
-                assert_eq!(sk, "f");
-                assert_eq!(option, "f");
-            }
-            Err(_) => assert!(false),
         }
 
         assert_eq!(cmd.name(), "app");
@@ -806,9 +971,20 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -820,26 +996,35 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("f"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &[""] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f=".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(err) => {
                 assert_eq!(err.option(), "f");
+                match err {
+                    InvalidOption::OptionTakesNoArg {
+                        store_key: sk,
+                        option,
+                    } => {
+                        assert_eq!(sk, "f");
+                        assert_eq!(option, "f");
+                    }
+                    _ => {}
+                }
             }
-        }
-        let result = cmd.parse_with(&opt_cfgs);
-        match result {
-            Ok(()) => assert!(false),
-            Err(InvalidOption::OptionTakesNoArg {
-                store_key: sk,
-                option,
-            }) => {
-                assert_eq!(sk, "f");
-                assert_eq!(option, "f");
-            }
-            Err(_) => assert!(false),
         }
 
         assert_eq!(cmd.name(), "app");
@@ -847,6 +1032,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -859,7 +1053,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -883,6 +1077,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -894,7 +1097,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -919,9 +1122,30 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
 
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
+
+        let opt_cfgs = vec![
+            OptCfg::with(&[names(&["foo-bar"]), has_arg(true), is_array(true)]),
+            OptCfg::with(&[names(&["f"]), has_arg(true), is_array(true)]),
+        ];
+
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -945,6 +1169,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -962,7 +1202,7 @@ mod tests_of_parse_with {
             "DEF".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -976,6 +1216,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), Some("DEF"));
         assert_eq!(cmd.opt_args("f"), Some(&["DEF"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -997,7 +1253,7 @@ mod tests_of_parse_with {
             "JKL".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1011,6 +1267,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), Some("DEF"));
         assert_eq!(cmd.opt_args("f"), Some(&["DEF", "JKL"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1029,7 +1301,7 @@ mod tests_of_parse_with {
             "DEF".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1043,6 +1315,18 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), None);
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(
+            cmd.cfgs[0].names,
+            vec!["foo-bar".to_string(), "f".to_string()]
+        );
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1059,7 +1343,7 @@ mod tests_of_parse_with {
             "DEF".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1087,6 +1371,11 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_args("f"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
 
+        let opt_cfgs = vec![
+            OptCfg::with(&[names(&["foo-bar"]), has_arg(true)]),
+            OptCfg::with(&[names(&["f"]), has_arg(true)]),
+        ];
+
         let mut cmd = Cmd::with_strings([
             "app".to_string(),
             "-f=ABC".to_string(),
@@ -1094,7 +1383,7 @@ mod tests_of_parse_with {
             "DEF".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1121,6 +1410,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("f"), Some("ABC"));
         assert_eq!(cmd.opt_args("f"), Some(&["ABC"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1137,7 +1442,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1154,6 +1459,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("baz"), Some("B"));
         assert_eq!(cmd.opt_args("baz"), Some(&["B"] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, Some(vec!["A".to_string()]));
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["baz".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, Some(vec!["B".to_string()]));
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1162,7 +1483,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1186,6 +1507,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo-bar"), None);
         assert_eq!(cmd.opt_args("foo-bar"), None);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, Some(vec!["A".to_string()]));
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1208,7 +1538,7 @@ mod tests_of_parse_with {
             "quux".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1228,6 +1558,36 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("corge"), Some("99"));
         assert_eq!(cmd.opt_args("corge"), Some(&["99"] as &[&str]));
         assert_eq!(cmd.args(), &["qux", "quux"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 4);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["baz".to_string(), "z".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, true);
+        assert_eq!(cmd.cfgs[1].is_array, true);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[2].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[2].names, vec!["corge".to_string()]);
+        assert_eq!(cmd.cfgs[2].has_arg, true);
+        assert_eq!(cmd.cfgs[2].is_array, false);
+        assert_eq!(cmd.cfgs[2].defaults, Some(vec!["99".to_string()]));
+        assert_eq!(cmd.cfgs[2].desc, "".to_string());
+        assert_eq!(cmd.cfgs[2].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[3].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[3].names, vec!["*".to_string()]);
+        assert_eq!(cmd.cfgs[3].has_arg, false);
+        assert_eq!(cmd.cfgs[3].is_array, false);
+        assert_eq!(cmd.cfgs[3].defaults, None);
+        assert_eq!(cmd.cfgs[3].desc, "".to_string());
+        assert_eq!(cmd.cfgs[3].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1236,7 +1596,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-ef".to_string(), "bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1258,6 +1618,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("foo"), None);
         assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1270,7 +1639,7 @@ mod tests_of_parse_with {
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "-ef=123".to_string(), "bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1296,6 +1665,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["e".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1312,7 +1697,7 @@ mod tests_of_parse_with {
             "bar".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1338,6 +1723,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["e".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1350,7 +1751,7 @@ mod tests_of_parse_with {
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1359,6 +1760,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.name(), "app");
         assert_eq!(cmd.has_opt("foo"), true);
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, Vec::<String>::new());
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["foo".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1371,7 +1788,7 @@ mod tests_of_parse_with {
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "--bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => {
@@ -1395,6 +1812,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("bar"), false);
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["bar".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1404,7 +1837,7 @@ mod tests_of_parse_with {
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1417,6 +1850,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.args(), &["bar"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "FooBar".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string(), "foo".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1425,7 +1867,7 @@ mod tests_of_parse_with {
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--FooBar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(err) => {
@@ -1439,6 +1881,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("FooBar"), None);
         assert_eq!(cmd.opt_args("FooBar"), Some(&[] as &[&str]));
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "FooBar".to_string());
+        assert_eq!(cmd.cfgs[0].names, Vec::<String>::new());
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1451,7 +1902,7 @@ mod tests_of_parse_with {
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "bar".to_string()]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => assert!(false),
             Err(ref err) => assert_eq!(err.option(), "b"),
@@ -1475,6 +1926,22 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("bar"), false);
         assert_eq!(cmd.has_opt("b"), false);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "FooBar".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["f".to_string(), "foo".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "FooBar".to_string());
+        assert_eq!(cmd.cfgs[1].names, vec!["b".to_string(), "bar".to_string()]);
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1488,7 +1955,7 @@ mod tests_of_parse_with {
             "baz".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1498,6 +1965,15 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("foo"), true);
         assert_eq!(cmd.has_opt("bar"), true);
         assert_eq!(cmd.args(), &["baz"] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "*".to_string());
+        assert_eq!(cmd.cfgs[0].names, Vec::<String>::new());
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -1520,7 +1996,7 @@ mod tests_of_parse_with {
             "--Bar=3".to_string(),
         ]);
 
-        let result = cmd.parse_with(&opt_cfgs);
+        let result = cmd.parse_with(opt_cfgs);
         match result {
             Ok(()) => {}
             Err(_) => assert!(false),
@@ -1533,5 +2009,21 @@ mod tests_of_parse_with {
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.has_opt("f"), false);
         assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.cfgs.len(), 2);
+        assert_eq!(cmd.cfgs[0].store_key, "Bar".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, true);
+        assert_eq!(cmd.cfgs[0].is_array, true);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.cfgs[1].store_key, "*".to_string());
+        assert_eq!(cmd.cfgs[1].names, Vec::<String>::new());
+        assert_eq!(cmd.cfgs[1].has_arg, false);
+        assert_eq!(cmd.cfgs[1].is_array, false);
+        assert_eq!(cmd.cfgs[1].defaults, None);
+        assert_eq!(cmd.cfgs[1].desc, "".to_string());
+        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
     }
 }
