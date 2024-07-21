@@ -171,7 +171,7 @@
 //!     ]),
 //! ];
 //!
-//! match cmd.parse_with(&opt_cfgs) {
+//! match cmd.parse_with(opt_cfgs) {
 //!     Ok(_) => { /* ... */ },
 //!     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
 //!     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
@@ -197,7 +197,7 @@ mod parse;
 
 use std::collections::HashMap;
 use std::env;
-use std::ffi;
+use std::ffi::OsString;
 use std::fmt;
 use std::mem;
 use std::path;
@@ -214,6 +214,9 @@ pub struct Cmd<'a> {
     name: &'a str,
     args: Vec<&'a str>,
     opts: HashMap<&'a str, Vec<&'a str>>,
+
+    /// The option configurations which is used to parse command line arguments.
+    pub cfgs: Vec<OptCfg>,
 
     _leaked_str: Vec<&'a str>,
 }
@@ -249,10 +252,10 @@ impl<'a> Cmd<'a> {
 
     /// Creates a `Cmd` instance with the specified iterator of [OsString]s.
     ///
-    /// [OsString]s can contain invalid unicode data, the return value of this function is
-    /// [Result] of `Cmd` or `errors::InvalidOsArg`.
+    /// [OsString]s can contain invalid unicode data, the return value of this function
+    /// is [Result] of `Cmd` or `errors::InvalidOsArg`.
     pub fn with_os_strings(
-        osargs: impl IntoIterator<Item = ffi::OsString>,
+        osargs: impl IntoIterator<Item = OsString>,
     ) -> Result<Cmd<'a>, errors::InvalidOsArg> {
         let osarg_iter = osargs.into_iter();
         let (size, _) = osarg_iter.size_hint();
@@ -315,6 +318,7 @@ impl<'a> Cmd<'a> {
             name: &_leaked_str[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
+            cfgs: Vec::new(),
             _leaked_str,
         })
     }
@@ -350,6 +354,7 @@ impl<'a> Cmd<'a> {
             name: &_leaked_str[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
+            cfgs: Vec::new(),
             _leaked_str,
         }
     }
