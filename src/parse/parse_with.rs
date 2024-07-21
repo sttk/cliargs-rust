@@ -55,9 +55,9 @@ impl<'a> Cmd<'a> {
     ///     Err(err) => panic!("Invalid option: {}", err.option()),
     /// }
     /// ```
-    pub fn parse_with(&mut self, mut opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
+    pub fn parse_with(&mut self, opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
         let result = self._parse_with(&opt_cfgs);
-        mem::swap(&mut opt_cfgs, &mut self.cfgs);
+        let _ = mem::replace(&mut self.cfgs, opt_cfgs);
         result
     }
 
