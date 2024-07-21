@@ -735,4 +735,252 @@ mod tests_of_cmd {
             assert_eq!(cmd.opt_args("baz"), None);
         }
     }
+
+    mod tests_of_moving_cmd {
+        use crate::Cmd;
+        use crate::OptCfg;
+        use crate::OptCfgParam::*;
+
+        #[test]
+        fn should_move_by_passing_a_parameter() {
+            fn move_cmd(cmd: Cmd) {
+                assert_eq!(cmd.name, "app");
+                assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
+                assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
+                assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+                assert_eq!(
+                    cmd._leaked_strs,
+                    &[
+                        "/path/to/app",
+                        "--foo",
+                        "--bar=ABC",
+                        "baz",
+                        "--bar=DEF",
+                        "qux",
+                        "quux",
+                        "corge",
+                        "foo",
+                        "bar",
+                    ]
+                );
+                assert_eq!(cmd.cfgs.len(), 2);
+                assert_eq!(cmd.cfgs[0].store_key, "");
+                assert_eq!(cmd.cfgs[0].names, &["foo"]);
+                assert_eq!(cmd.cfgs[0].has_arg, false);
+                assert_eq!(cmd.cfgs[0].is_array, false);
+                assert_eq!(cmd.cfgs[0].defaults, None);
+                assert_eq!(cmd.cfgs[0].desc, "");
+                assert_eq!(cmd.cfgs[0].arg_in_help, "");
+                assert_eq!(cmd.cfgs[1].store_key, "");
+                assert_eq!(cmd.cfgs[1].names, &["bar"]);
+                assert_eq!(cmd.cfgs[1].has_arg, true);
+                assert_eq!(cmd.cfgs[1].is_array, true);
+                assert_eq!(cmd.cfgs[1].defaults, None);
+                assert_eq!(cmd.cfgs[1].desc, "");
+                assert_eq!(cmd.cfgs[1].arg_in_help, "");
+            }
+
+            let cfgs = vec![
+                OptCfg::with(&[names(&["foo"])]),
+                OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+            ];
+
+            let mut cmd = Cmd::with_strings([
+                "/path/to/app".to_string(),
+                "--foo".to_string(),
+                "--bar=ABC".to_string(),
+                "baz".to_string(),
+                "--bar=DEF".to_string(),
+                "qux".to_string(),
+                "quux".to_string(),
+                "corge".to_string(),
+            ]);
+            let _ = cmd.parse_with(cfgs);
+
+            move_cmd(cmd);
+        }
+
+        #[test]
+        fn should_move_by_returning() {
+            fn move_cmd() -> Cmd<'static> {
+                let cfgs = vec![
+                    OptCfg::with(&[names(&["foo"])]),
+                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                ];
+
+                let mut cmd = Cmd::with_strings([
+                    "/path/to/app".to_string(),
+                    "--foo".to_string(),
+                    "--bar=ABC".to_string(),
+                    "baz".to_string(),
+                    "--bar=DEF".to_string(),
+                    "qux".to_string(),
+                    "quux".to_string(),
+                    "corge".to_string(),
+                ]);
+                let _ = cmd.parse_with(cfgs);
+                cmd
+            }
+
+            let cmd = move_cmd();
+            assert_eq!(cmd.name, "app");
+            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(
+                cmd._leaked_strs,
+                &[
+                    "/path/to/app",
+                    "--foo",
+                    "--bar=ABC",
+                    "baz",
+                    "--bar=DEF",
+                    "qux",
+                    "quux",
+                    "corge",
+                    "foo",
+                    "bar",
+                ]
+            );
+            assert_eq!(cmd.cfgs.len(), 2);
+            assert_eq!(cmd.cfgs[0].store_key, "");
+            assert_eq!(cmd.cfgs[0].names, &["foo"]);
+            assert_eq!(cmd.cfgs[0].has_arg, false);
+            assert_eq!(cmd.cfgs[0].is_array, false);
+            assert_eq!(cmd.cfgs[0].defaults, None);
+            assert_eq!(cmd.cfgs[0].desc, "");
+            assert_eq!(cmd.cfgs[0].arg_in_help, "");
+            assert_eq!(cmd.cfgs[1].store_key, "");
+            assert_eq!(cmd.cfgs[1].names, &["bar"]);
+            assert_eq!(cmd.cfgs[1].has_arg, true);
+            assert_eq!(cmd.cfgs[1].is_array, true);
+            assert_eq!(cmd.cfgs[1].defaults, None);
+            assert_eq!(cmd.cfgs[1].desc, "");
+            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+        }
+
+        #[test]
+        fn should_move_by_mem_replace() {
+            fn move_cmd() -> Cmd<'static> {
+                let cfgs = vec![
+                    OptCfg::with(&[names(&["foo"])]),
+                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                ];
+
+                let mut cmd = Cmd::with_strings([
+                    "/path/to/app".to_string(),
+                    "--foo".to_string(),
+                    "--bar=ABC".to_string(),
+                    "baz".to_string(),
+                    "--bar=DEF".to_string(),
+                    "qux".to_string(),
+                    "quux".to_string(),
+                    "corge".to_string(),
+                ]);
+                let _ = cmd.parse_with(cfgs);
+
+                let mut cmd1 = Cmd::with_strings([]);
+                let _ = std::mem::replace(&mut cmd1, cmd);
+                cmd1
+            }
+
+            let cmd = move_cmd();
+            assert_eq!(cmd.name, "app");
+            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(
+                cmd._leaked_strs,
+                &[
+                    "/path/to/app",
+                    "--foo",
+                    "--bar=ABC",
+                    "baz",
+                    "--bar=DEF",
+                    "qux",
+                    "quux",
+                    "corge",
+                    "foo",
+                    "bar",
+                ]
+            );
+            assert_eq!(cmd.cfgs.len(), 2);
+            assert_eq!(cmd.cfgs[0].store_key, "");
+            assert_eq!(cmd.cfgs[0].names, &["foo"]);
+            assert_eq!(cmd.cfgs[0].has_arg, false);
+            assert_eq!(cmd.cfgs[0].is_array, false);
+            assert_eq!(cmd.cfgs[0].defaults, None);
+            assert_eq!(cmd.cfgs[0].desc, "");
+            assert_eq!(cmd.cfgs[0].arg_in_help, "");
+            assert_eq!(cmd.cfgs[1].store_key, "");
+            assert_eq!(cmd.cfgs[1].names, &["bar"]);
+            assert_eq!(cmd.cfgs[1].has_arg, true);
+            assert_eq!(cmd.cfgs[1].is_array, true);
+            assert_eq!(cmd.cfgs[1].defaults, None);
+            assert_eq!(cmd.cfgs[1].desc, "");
+            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+        }
+
+        #[test]
+        fn should_move_by_mem_swap() {
+            fn move_cmd() -> Cmd<'static> {
+                let cfgs = vec![
+                    OptCfg::with(&[names(&["foo"])]),
+                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                ];
+
+                let mut cmd = Cmd::with_strings([
+                    "/path/to/app".to_string(),
+                    "--foo".to_string(),
+                    "--bar=ABC".to_string(),
+                    "baz".to_string(),
+                    "--bar=DEF".to_string(),
+                    "qux".to_string(),
+                    "quux".to_string(),
+                    "corge".to_string(),
+                ]);
+                let _ = cmd.parse_with(cfgs);
+
+                let mut cmd1 = Cmd::with_strings([]);
+                let _ = std::mem::swap(&mut cmd1, &mut cmd);
+                cmd1
+            }
+
+            let cmd = move_cmd();
+            assert_eq!(cmd.name, "app");
+            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(
+                cmd._leaked_strs,
+                &[
+                    "/path/to/app",
+                    "--foo",
+                    "--bar=ABC",
+                    "baz",
+                    "--bar=DEF",
+                    "qux",
+                    "quux",
+                    "corge",
+                    "foo",
+                    "bar",
+                ]
+            );
+            assert_eq!(cmd.cfgs.len(), 2);
+            assert_eq!(cmd.cfgs[0].store_key, "");
+            assert_eq!(cmd.cfgs[0].names, &["foo"]);
+            assert_eq!(cmd.cfgs[0].has_arg, false);
+            assert_eq!(cmd.cfgs[0].is_array, false);
+            assert_eq!(cmd.cfgs[0].defaults, None);
+            assert_eq!(cmd.cfgs[0].desc, "");
+            assert_eq!(cmd.cfgs[0].arg_in_help, "");
+            assert_eq!(cmd.cfgs[1].store_key, "");
+            assert_eq!(cmd.cfgs[1].names, &["bar"]);
+            assert_eq!(cmd.cfgs[1].has_arg, true);
+            assert_eq!(cmd.cfgs[1].is_array, true);
+            assert_eq!(cmd.cfgs[1].defaults, None);
+            assert_eq!(cmd.cfgs[1].desc, "");
+            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+        }
+    }
 }
