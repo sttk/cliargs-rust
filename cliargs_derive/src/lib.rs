@@ -14,7 +14,6 @@ use util::identify_field_type;
 use proc_macro::TokenStream;
 use std::collections::HashMap;
 
-///
 /// Is attached to a struct which holds command line option values, and automatically implements
 /// its method to generate `OptCfg`s from its fields, and other methods.
 ///
