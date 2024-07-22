@@ -50,7 +50,10 @@ mod tests_of_parse_for {
 
         assert_eq!(cmd.cfgs.len(), 1);
         assert_eq!(cmd.cfgs[0].store_key, "foo_bar");
-        assert_eq!(cmd.cfgs[0].names, ["f".to_string(), "b".to_string(), "foo-bar".to_string()]);
+        assert_eq!(
+            cmd.cfgs[0].names,
+            ["f".to_string(), "b".to_string(), "foo-bar".to_string()]
+        );
         assert_eq!(cmd.cfgs[0].has_arg, false);
         assert_eq!(cmd.cfgs[0].is_array, false);
         assert_eq!(cmd.cfgs[0].defaults, None);
