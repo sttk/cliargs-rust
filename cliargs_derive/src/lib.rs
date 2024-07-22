@@ -20,7 +20,7 @@ use std::collections::HashMap;
 /// This macro automatically implements the method to generates a vector of `OptCfg` from the field
 /// definitions and `opt` field attributes, and this also implements the method that instantiates
 /// the struct using the default values specified in `opt` field attributes, and implements the
-/// method to updates the field values with the values from the passed `HashMap`.
+/// method to updates the field values with the values from the passed `HashMap1.
 ///
 /// The `opt` field attribute can have the following pairs of name and value: one is `cfg` to
 /// specify `names` and `defaults` of `OptCfg` struct, another is `desc` to specify `desc` of
