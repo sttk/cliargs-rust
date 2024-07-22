@@ -12,6 +12,8 @@
 //!     - This library supports not `-ofoo` but `-o=foo` as an alternative to
 //!       `-o foo` for short option.
 //! - Supports parsing with option configurations.
+//! - Supports parsing with option configurations made from struct fields and attributes, and
+//!   setting the option values to them.
 //!
 //! [posix]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
 //! [gnu]: https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html
