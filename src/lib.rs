@@ -220,9 +220,7 @@ pub struct Cmd<'a> {
     name: &'a str,
     args: Vec<&'a str>,
     opts: HashMap<&'a str, Vec<&'a str>>,
-
-    /// The option configurations which is used to parse command line arguments.
-    pub cfgs: Vec<OptCfg>,
+    cfgs: Vec<OptCfg>,
 
     _leaked_strs: Vec<&'a str>,
 }
@@ -411,6 +409,11 @@ impl<'a> Cmd<'a> {
             Some(vec) => Some(&vec),
             None => None,
         }
+    }
+
+    /// Retrieves the option configurations which was used to parse command line arguments.
+    pub fn opt_cfgs(&'a self) -> &[OptCfg] {
+        &self.cfgs
     }
 }
 
@@ -750,10 +753,10 @@ mod tests_of_cmd {
         #[test]
         fn should_move_by_passing_a_parameter() {
             fn move_cmd(cmd: Cmd) {
-                assert_eq!(cmd.name, "app");
-                assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
-                assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
-                assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &["baz", "qux", "quux", "corge"]);
+                assert_eq!(cmd.opt_args("foo").unwrap(), &Vec::<&str>::new());
+                assert_eq!(cmd.opt_args("bar").unwrap(), &["ABC", "DEF"]);
                 assert_eq!(
                     cmd._leaked_strs,
                     &[
@@ -769,21 +772,21 @@ mod tests_of_cmd {
                         "bar",
                     ]
                 );
-                assert_eq!(cmd.cfgs.len(), 2);
-                assert_eq!(cmd.cfgs[0].store_key, "");
-                assert_eq!(cmd.cfgs[0].names, &["foo"]);
-                assert_eq!(cmd.cfgs[0].has_arg, false);
-                assert_eq!(cmd.cfgs[0].is_array, false);
-                assert_eq!(cmd.cfgs[0].defaults, None);
-                assert_eq!(cmd.cfgs[0].desc, "");
-                assert_eq!(cmd.cfgs[0].arg_in_help, "");
-                assert_eq!(cmd.cfgs[1].store_key, "");
-                assert_eq!(cmd.cfgs[1].names, &["bar"]);
-                assert_eq!(cmd.cfgs[1].has_arg, true);
-                assert_eq!(cmd.cfgs[1].is_array, true);
-                assert_eq!(cmd.cfgs[1].defaults, None);
-                assert_eq!(cmd.cfgs[1].desc, "");
-                assert_eq!(cmd.cfgs[1].arg_in_help, "");
+                assert_eq!(cmd.opt_cfgs().len(), 2);
+                assert_eq!(cmd.opt_cfgs()[0].store_key, "");
+                assert_eq!(cmd.opt_cfgs()[0].names, &["foo"]);
+                assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+                assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+                assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+                assert_eq!(cmd.opt_cfgs()[0].desc, "");
+                assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "");
+                assert_eq!(cmd.opt_cfgs()[1].store_key, "");
+                assert_eq!(cmd.opt_cfgs()[1].names, &["bar"]);
+                assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+                assert_eq!(cmd.opt_cfgs()[1].is_array, true);
+                assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+                assert_eq!(cmd.opt_cfgs()[1].desc, "");
+                assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "");
             }
 
             let cfgs = vec![
@@ -829,10 +832,10 @@ mod tests_of_cmd {
             }
 
             let cmd = move_cmd();
-            assert_eq!(cmd.name, "app");
-            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
-            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
-            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opt_args("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opt_args("bar").unwrap(), &["ABC", "DEF"]);
             assert_eq!(
                 cmd._leaked_strs,
                 &[
@@ -848,21 +851,21 @@ mod tests_of_cmd {
                     "bar",
                 ]
             );
-            assert_eq!(cmd.cfgs.len(), 2);
-            assert_eq!(cmd.cfgs[0].store_key, "");
-            assert_eq!(cmd.cfgs[0].names, &["foo"]);
-            assert_eq!(cmd.cfgs[0].has_arg, false);
-            assert_eq!(cmd.cfgs[0].is_array, false);
-            assert_eq!(cmd.cfgs[0].defaults, None);
-            assert_eq!(cmd.cfgs[0].desc, "");
-            assert_eq!(cmd.cfgs[0].arg_in_help, "");
-            assert_eq!(cmd.cfgs[1].store_key, "");
-            assert_eq!(cmd.cfgs[1].names, &["bar"]);
-            assert_eq!(cmd.cfgs[1].has_arg, true);
-            assert_eq!(cmd.cfgs[1].is_array, true);
-            assert_eq!(cmd.cfgs[1].defaults, None);
-            assert_eq!(cmd.cfgs[1].desc, "");
-            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs().len(), 2);
+            assert_eq!(cmd.opt_cfgs()[0].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[0].names, &["foo"]);
+            assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+            assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+            assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[0].desc, "");
+            assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs()[1].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[1].names, &["bar"]);
+            assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+            assert_eq!(cmd.opt_cfgs()[1].is_array, true);
+            assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[1].desc, "");
+            assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "");
         }
 
         #[test]
@@ -891,10 +894,10 @@ mod tests_of_cmd {
             }
 
             let cmd = move_cmd();
-            assert_eq!(cmd.name, "app");
-            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
-            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
-            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opt_args("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opt_args("bar").unwrap(), &["ABC", "DEF"]);
             assert_eq!(
                 cmd._leaked_strs,
                 &[
@@ -910,21 +913,21 @@ mod tests_of_cmd {
                     "bar",
                 ]
             );
-            assert_eq!(cmd.cfgs.len(), 2);
-            assert_eq!(cmd.cfgs[0].store_key, "");
-            assert_eq!(cmd.cfgs[0].names, &["foo"]);
-            assert_eq!(cmd.cfgs[0].has_arg, false);
-            assert_eq!(cmd.cfgs[0].is_array, false);
-            assert_eq!(cmd.cfgs[0].defaults, None);
-            assert_eq!(cmd.cfgs[0].desc, "");
-            assert_eq!(cmd.cfgs[0].arg_in_help, "");
-            assert_eq!(cmd.cfgs[1].store_key, "");
-            assert_eq!(cmd.cfgs[1].names, &["bar"]);
-            assert_eq!(cmd.cfgs[1].has_arg, true);
-            assert_eq!(cmd.cfgs[1].is_array, true);
-            assert_eq!(cmd.cfgs[1].defaults, None);
-            assert_eq!(cmd.cfgs[1].desc, "");
-            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs().len(), 2);
+            assert_eq!(cmd.opt_cfgs()[0].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[0].names, &["foo"]);
+            assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+            assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+            assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[0].desc, "");
+            assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs()[1].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[1].names, &["bar"]);
+            assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+            assert_eq!(cmd.opt_cfgs()[1].is_array, true);
+            assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[1].desc, "");
+            assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "");
         }
 
         #[test]
@@ -953,10 +956,10 @@ mod tests_of_cmd {
             }
 
             let cmd = move_cmd();
-            assert_eq!(cmd.name, "app");
-            assert_eq!(cmd.args, &["baz", "qux", "quux", "corge"]);
-            assert_eq!(cmd.opts.get("foo").unwrap(), &Vec::<&str>::new());
-            assert_eq!(cmd.opts.get("bar").unwrap(), &["ABC", "DEF"]);
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &["baz", "qux", "quux", "corge"]);
+            assert_eq!(cmd.opt_args("foo").unwrap(), &Vec::<&str>::new());
+            assert_eq!(cmd.opt_args("bar").unwrap(), &["ABC", "DEF"]);
             assert_eq!(
                 cmd._leaked_strs,
                 &[
@@ -972,21 +975,21 @@ mod tests_of_cmd {
                     "bar",
                 ]
             );
-            assert_eq!(cmd.cfgs.len(), 2);
-            assert_eq!(cmd.cfgs[0].store_key, "");
-            assert_eq!(cmd.cfgs[0].names, &["foo"]);
-            assert_eq!(cmd.cfgs[0].has_arg, false);
-            assert_eq!(cmd.cfgs[0].is_array, false);
-            assert_eq!(cmd.cfgs[0].defaults, None);
-            assert_eq!(cmd.cfgs[0].desc, "");
-            assert_eq!(cmd.cfgs[0].arg_in_help, "");
-            assert_eq!(cmd.cfgs[1].store_key, "");
-            assert_eq!(cmd.cfgs[1].names, &["bar"]);
-            assert_eq!(cmd.cfgs[1].has_arg, true);
-            assert_eq!(cmd.cfgs[1].is_array, true);
-            assert_eq!(cmd.cfgs[1].defaults, None);
-            assert_eq!(cmd.cfgs[1].desc, "");
-            assert_eq!(cmd.cfgs[1].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs().len(), 2);
+            assert_eq!(cmd.opt_cfgs()[0].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[0].names, &["foo"]);
+            assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+            assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+            assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[0].desc, "");
+            assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "");
+            assert_eq!(cmd.opt_cfgs()[1].store_key, "");
+            assert_eq!(cmd.opt_cfgs()[1].names, &["bar"]);
+            assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+            assert_eq!(cmd.opt_cfgs()[1].is_array, true);
+            assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+            assert_eq!(cmd.opt_cfgs()[1].desc, "");
+            assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "");
         }
     }
 }
