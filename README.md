@@ -120,7 +120,7 @@ If you want to prioritize the output of short option name first in the help text
 This crate provides the validator `cliargs::validators::validate_number<T>` which validates whether an option argument is valid format as a number.
 
 The ownership of the vector of option configurations which is passed as an argument of this method
-is moved to this method and set to the public field `cfgs` of [Cmd] instance.
+is moved to this method and set to the public field `cfgs` of `Cmd` instance.
 If you want to access the option configurations after parsing, get them from this field.
 
 ```
@@ -166,7 +166,7 @@ This method divides command line arguments to command arguments and options, the
 each option value to a curresponding field of the option store.
 
 Within this method, a vector of `OptCfg` is made from the fields of the option store.
-This [OptCfg] vector is set to the public field `cfgs` of the `Cmd` instance.
+This `OptCfg` vector is set to the public field `cfgs` of the `Cmd` instance.
 If you want to access this option configurations, get them from this field.
 
 An option configuration corresponding to each field of an option store is determined by
