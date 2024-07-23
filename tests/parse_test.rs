@@ -12,7 +12,7 @@ mod tests_of_parse {
         }
         println!("cmd = {cmd:?}");
         assert!(cmd.name().starts_with("parse_test-"));
-        assert!(cmd.cfgs.is_empty());
+        assert!(cmd.opt_cfgs().is_empty());
     }
 
     #[test]
@@ -37,7 +37,7 @@ mod tests_of_parse {
         assert_eq!(cmd.has_opt("baz"), true);
         assert_eq!(cmd.opt_arg("baz"), None);
         assert_eq!(cmd.opt_args("baz"), Some(&[] as &[&str]));
-        assert!(cmd.cfgs.is_empty());
+        assert!(cmd.opt_cfgs().is_empty());
     }
 
     #[test]
@@ -63,7 +63,7 @@ mod tests_of_parse {
         assert_eq!(cmd.has_opt("baz"), true);
         assert_eq!(cmd.opt_arg("baz"), None);
         assert_eq!(cmd.opt_args("baz"), Some(&[] as &[&str]));
-        assert!(cmd.cfgs.is_empty());
+        assert!(cmd.opt_cfgs().is_empty());
     }
 }
 

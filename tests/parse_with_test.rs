@@ -43,31 +43,37 @@ mod tests_of_parse_with {
         assert_eq!(cmd.opt_arg("qux"), Some("123"));
         assert_eq!(cmd.opt_args("qux"), Some(&["123", "456"] as &[&str]));
 
-        assert_eq!(cmd.cfgs.len(), 3);
-        assert_eq!(cmd.cfgs[0].store_key, "fooBar".to_string());
+        assert_eq!(cmd.opt_cfgs().len(), 3);
+        assert_eq!(cmd.opt_cfgs()[0].store_key, "fooBar".to_string());
         assert_eq!(
-            cmd.cfgs[0].names,
+            cmd.opt_cfgs()[0].names,
             vec!["foo-bar".to_string(), "f".to_string()]
         );
-        assert_eq!(cmd.cfgs[0].has_arg, false);
-        assert_eq!(cmd.cfgs[0].is_array, false);
-        assert_eq!(cmd.cfgs[0].defaults, None);
-        assert_eq!(cmd.cfgs[0].desc, "".to_string());
-        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[1].names, vec!["baz".to_string(), "b".to_string()]);
-        assert_eq!(cmd.cfgs[1].has_arg, true);
-        assert_eq!(cmd.cfgs[1].is_array, false);
-        assert_eq!(cmd.cfgs[1].defaults, None);
-        assert_eq!(cmd.cfgs[1].desc, "".to_string());
-        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[2].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[2].names, vec!["qux".to_string(), "q".to_string()]);
-        assert_eq!(cmd.cfgs[2].has_arg, true);
-        assert_eq!(cmd.cfgs[2].is_array, true);
-        assert_eq!(cmd.cfgs[2].defaults, None);
-        assert_eq!(cmd.cfgs[2].desc, "".to_string());
-        assert_eq!(cmd.cfgs[2].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+        assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[0].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[1].names,
+            vec!["baz".to_string(), "b".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[1].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[1].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[2].names,
+            vec!["qux".to_string(), "q".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[2].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[2].is_array, true);
+        assert_eq!(cmd.opt_cfgs()[2].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[2].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].arg_in_help, "".to_string());
     }
 }
 
@@ -123,31 +129,37 @@ mod tests_of_errors {
         assert_eq!(cmd.opt_arg("qux"), Some("123"));
         assert_eq!(cmd.opt_args("qux"), Some(&["123", "456"] as &[&str]));
 
-        assert_eq!(cmd.cfgs.len(), 3);
-        assert_eq!(cmd.cfgs[0].store_key, "fooBar".to_string());
+        assert_eq!(cmd.opt_cfgs().len(), 3);
+        assert_eq!(cmd.opt_cfgs()[0].store_key, "fooBar".to_string());
         assert_eq!(
-            cmd.cfgs[0].names,
+            cmd.opt_cfgs()[0].names,
             vec!["foo-bar".to_string(), "f".to_string()]
         );
-        assert_eq!(cmd.cfgs[0].has_arg, false);
-        assert_eq!(cmd.cfgs[0].is_array, false);
-        assert_eq!(cmd.cfgs[0].defaults, None);
-        assert_eq!(cmd.cfgs[0].desc, "".to_string());
-        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[1].names, vec!["baz".to_string(), "b".to_string()]);
-        assert_eq!(cmd.cfgs[1].has_arg, true);
-        assert_eq!(cmd.cfgs[1].is_array, false);
-        assert_eq!(cmd.cfgs[1].defaults, None);
-        assert_eq!(cmd.cfgs[1].desc, "".to_string());
-        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[2].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[2].names, vec!["qux".to_string(), "q".to_string()]);
-        assert_eq!(cmd.cfgs[2].has_arg, true);
-        assert_eq!(cmd.cfgs[2].is_array, true);
-        assert_eq!(cmd.cfgs[2].defaults, None);
-        assert_eq!(cmd.cfgs[2].desc, "".to_string());
-        assert_eq!(cmd.cfgs[2].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+        assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[0].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[1].names,
+            vec!["baz".to_string(), "b".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[1].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[1].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[2].names,
+            vec!["qux".to_string(), "q".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[2].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[2].is_array, true);
+        assert_eq!(cmd.opt_cfgs()[2].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[2].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].arg_in_help, "".to_string());
     }
 
     #[test]
@@ -199,30 +211,36 @@ mod tests_of_errors {
         assert_eq!(cmd.opt_arg("qux"), Some("123"));
         assert_eq!(cmd.opt_args("qux"), Some(&["123"] as &[&str]));
 
-        assert_eq!(cmd.cfgs.len(), 3);
-        assert_eq!(cmd.cfgs[0].store_key, "fooBar".to_string());
+        assert_eq!(cmd.opt_cfgs().len(), 3);
+        assert_eq!(cmd.opt_cfgs()[0].store_key, "fooBar".to_string());
         assert_eq!(
-            cmd.cfgs[0].names,
+            cmd.opt_cfgs()[0].names,
             vec!["foo-bar".to_string(), "f".to_string()]
         );
-        assert_eq!(cmd.cfgs[0].has_arg, false);
-        assert_eq!(cmd.cfgs[0].is_array, false);
-        assert_eq!(cmd.cfgs[0].defaults, None);
-        assert_eq!(cmd.cfgs[0].desc, "".to_string());
-        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[1].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[1].names, vec!["baz".to_string(), "b".to_string()]);
-        assert_eq!(cmd.cfgs[1].has_arg, true);
-        assert_eq!(cmd.cfgs[1].is_array, false);
-        assert_eq!(cmd.cfgs[1].defaults, None);
-        assert_eq!(cmd.cfgs[1].desc, "".to_string());
-        assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
-        assert_eq!(cmd.cfgs[2].store_key, "".to_string());
-        assert_eq!(cmd.cfgs[2].names, vec!["qux".to_string(), "q".to_string()]);
-        assert_eq!(cmd.cfgs[2].has_arg, true);
-        assert_eq!(cmd.cfgs[2].is_array, true);
-        assert_eq!(cmd.cfgs[2].defaults, None);
-        assert_eq!(cmd.cfgs[2].desc, "".to_string());
-        assert_eq!(cmd.cfgs[2].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+        assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[0].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[1].names,
+            vec!["baz".to_string(), "b".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[1].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[1].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[1].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[1].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[1].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].store_key, "".to_string());
+        assert_eq!(
+            cmd.opt_cfgs()[2].names,
+            vec!["qux".to_string(), "q".to_string()]
+        );
+        assert_eq!(cmd.opt_cfgs()[2].has_arg, true);
+        assert_eq!(cmd.opt_cfgs()[2].is_array, true);
+        assert_eq!(cmd.opt_cfgs()[2].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[2].desc, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[2].arg_in_help, "".to_string());
     }
 }

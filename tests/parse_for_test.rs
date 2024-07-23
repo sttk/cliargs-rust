@@ -48,16 +48,16 @@ mod tests_of_parse_for {
         assert_eq!(cmd.opt_arg("foo_bar"), None);
         assert_eq!(cmd.opt_args("foo_bar"), Some(&[] as &[&str]));
 
-        assert_eq!(cmd.cfgs.len(), 1);
-        assert_eq!(cmd.cfgs[0].store_key, "foo_bar");
+        assert_eq!(cmd.opt_cfgs().len(), 1);
+        assert_eq!(cmd.opt_cfgs()[0].store_key, "foo_bar");
         assert_eq!(
-            cmd.cfgs[0].names,
+            cmd.opt_cfgs()[0].names,
             ["f".to_string(), "b".to_string(), "foo-bar".to_string()]
         );
-        assert_eq!(cmd.cfgs[0].has_arg, false);
-        assert_eq!(cmd.cfgs[0].is_array, false);
-        assert_eq!(cmd.cfgs[0].defaults, None);
-        assert_eq!(cmd.cfgs[0].desc, "The FooBar flag".to_string());
-        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].has_arg, false);
+        assert_eq!(cmd.opt_cfgs()[0].is_array, false);
+        assert_eq!(cmd.opt_cfgs()[0].defaults, None);
+        assert_eq!(cmd.opt_cfgs()[0].desc, "The FooBar flag".to_string());
+        assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "".to_string());
     }
 }
