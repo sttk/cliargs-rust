@@ -411,7 +411,7 @@ impl<'a> Cmd<'a> {
         }
     }
 
-    /// The option configurations which was used to parse command line arguments.
+    /// Retrieves the option configurations which was used to parse command line arguments.
     pub fn opt_cfgs(&'a self) -> &[OptCfg] {
         &self.cfgs
     }
