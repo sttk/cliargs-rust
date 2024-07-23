@@ -7,7 +7,6 @@ use crate::errors::InvalidOption;
 use crate::Cmd;
 use crate::OptCfg;
 use std::collections::HashMap;
-use std::mem;
 
 impl<'a> Cmd<'a> {
     /// Parses command line arguments with option configurations.
@@ -61,7 +60,7 @@ impl<'a> Cmd<'a> {
     /// ```
     pub fn parse_with(&mut self, opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
         let result = self._parse_with(&opt_cfgs);
-        let _ = mem::replace(&mut self.cfgs, opt_cfgs);
+        self.cfgs = opt_cfgs;
         result
     }
 

@@ -104,7 +104,7 @@ impl Cmd<'_> {
     ///     Err(err) => panic!("Invalid option: {}", err.option()),
     /// }
     ///
-    /// let opt_cfgs = &cmd.cfgs;
+    /// let opt_cfgs = &cmd.opt_cfgs();
     /// ```
     pub fn parse_for<T: OptStore>(&mut self, opt_store: &mut T) -> Result<(), InvalidOption> {
         let cfgs = opt_store.make_opt_cfgs();
