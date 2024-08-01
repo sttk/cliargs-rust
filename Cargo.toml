@@ -16,6 +16,7 @@ categories = ["command-line-interface"]
 
 [dependencies]
 cliargs_derive = { version = "0.1", path = "cliargs_derive" }
+linebreak = "0.3.1"
 
 [dev-dependencies]
 trybuild = "1.0"

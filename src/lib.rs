@@ -228,6 +228,10 @@ mod opt_cfg;
 pub use opt_cfg::OptCfg;
 pub use opt_cfg::OptCfgParam;
 
+mod help;
+pub use help::Help;
+pub use help::HelpIter;
+
 /// Function pointers for validating an option argument.
 pub use opt_cfg::validators;
 
