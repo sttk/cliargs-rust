@@ -73,8 +73,10 @@ impl<'a> Cmd<'a> {
         let mut has_any_opt = false;
 
         for (i, cfg) in opt_cfgs.iter().enumerate() {
-            let store_key: &str = if cfg.store_key.is_empty() && cfg.names.len() > 0 {
-                &cfg.names[0]
+            let names: Vec<&String> = cfg.names.iter().filter(|nm| !nm.is_empty()).collect();
+
+            let store_key: &str = if cfg.store_key.is_empty() && !names.is_empty() {
+                &names[0]
             } else {
                 &cfg.store_key
             };
@@ -88,10 +90,10 @@ impl<'a> Cmd<'a> {
                 continue;
             }
 
-            let first_name = if cfg.names.is_empty() {
+            let first_name = if names.is_empty() {
                 store_key
             } else {
-                &cfg.names[0]
+                &names[0]
             };
 
             if opt_map.contains_key(store_key) {
@@ -119,10 +121,10 @@ impl<'a> Cmd<'a> {
                 }
             }
 
-            if cfg.names.is_empty() {
+            if names.is_empty() {
                 cfg_map.insert(first_name, i);
             } else {
-                for name in cfg.names.iter() {
+                for name in names.iter() {
                     if cfg_map.contains_key(name.as_str()) {
                         return Err(InvalidOption::OptionNameIsDuplicated {
                             store_key: store_key.to_string(),
@@ -155,10 +157,14 @@ impl<'a> Cmd<'a> {
             if let Some(i) = cfg_map.get(name) {
                 let cfg = &opt_cfgs[*i];
 
-                let store_key = if cfg.store_key.is_empty() {
-                    cfg.names[0].as_str()
+                let store_key: &str = if !cfg.store_key.is_empty() {
+                    &cfg.store_key
                 } else {
-                    cfg.store_key.as_str()
+                    if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                        name
+                    } else {
+                        ""
+                    }
                 };
 
                 if let Some(arg) = arg_op {
@@ -241,15 +247,23 @@ impl<'a> Cmd<'a> {
         result?;
 
         for cfg in opt_cfgs.iter() {
-            if cfg.names.is_empty() {
+            let store_key: &str = if !cfg.store_key.is_empty() {
+                &cfg.store_key
+            } else {
+                if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                    name
+                } else {
+                    ""
+                }
+            };
+
+            if store_key.is_empty() {
                 continue;
             }
 
-            let store_key = if cfg.store_key.is_empty() {
-                cfg.names[0].as_str()
-            } else {
-                cfg.store_key.as_str()
-            };
+            if store_key == ANY_OPT {
+                continue;
+            }
 
             if let None = self.opts.get_mut(store_key) {
                 if let Some(def_vec) = &cfg.defaults {
