@@ -11,7 +11,7 @@ This library provides the following functionalities:
 - Supports parsing with option configurations.
 - Supports parsing with option configurations made from struct fields and attributes, and setting the option values to them.
 - Is able to parse command line arguments including sub commands. *(To be added)*
-- Generates help text from option configurations. *(To be added)*
+- Generates help text from option configurations.
 
 ## Install
 
@@ -123,6 +123,8 @@ The ownership of the vector of option configurations which is passed as an argum
 is moved to this method and set to the public field `cfgs` of `Cmd` instance.
 If you want to access the option configurations after parsing, get them from this field.
 
+In addition,the help printing for an array of `OptCfg` is generated with `Help`.
+
 ```
 use cliargs::{Cmd, OptCfg};
 use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
@@ -155,6 +157,18 @@ match cmd.parse_with(opt_cfgs) {
     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
     Err(err) => panic!("Invalid option: {}", err.option()),
 }
+
+let opt_cfgs = cmd.opt_cfgs();
+
+let mut help = Help::new();
+help.add_text("This is the usage description.".to_string());
+help.add_opts_with_margins(opt_cfgs, 2, 0);
+help.print();
+
+// (stdout)
+// This is the usage description.
+//   --foo-bar, -f    This is description of foo-bar.
+//   --bar, -z <num>  This is description of baz.
 ```
 
 ### Parse for a OptStore struct
@@ -222,7 +236,17 @@ match cmd.parse_for(&mut my_options) {
     Err(err) => panic!("Invalid option: {}", err.option()),
 }
 
-let opt_cfgs = &cmd.cfgs;
+let opt_cfgs = cmd.opt_cfgs();
+
+let mut help = Help::new();
+help.add_text("This is the usage description.".to_string());
+help.add_opts_with_margins(opt_cfgs, 2, 0);
+help.print();
+
+// (stdout)
+// This is the usage description.
+//   -f, --foo-bar  This is description of foo_bar.
+//   -z, --baz <s>  This is description of baz.
 ```
 
 ## Supporting Rust versions
@@ -234,7 +258,7 @@ This crate supports Rust 1.74.1 or later.
 Fetching index
 Determining the Minimum Supported Rust Version (MSRV) for toolchain x86_64-apple-darwin
 Using check command cargo check
-   Finished The MSRV is: 1.74.1   █████████████████████████████████████████████████████████ 00:00:04
+   Finished The MSRV is: 1.74.1   ████████████████████████████████████████████ 00:00:04
 ```
 
 

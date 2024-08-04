@@ -14,6 +14,7 @@
 //! - Supports parsing with option configurations.
 //! - Supports parsing with option configurations made from struct fields and attributes, and
 //!   setting the option values to them.
+//! - Generates help text from option configurations.
 //!
 //! [posix]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
 //! [gnu]: https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html
@@ -145,11 +146,14 @@
 //! This crate provides the validator `cliargs::validators::validate_number<T>`
 //! which validates whether an option argument is valid format as a number.
 //!
+//! In addition,the help printing for an array of [OptCfg] is generated with [Help].
+//!
 //! ```
 //! use cliargs::{Cmd, OptCfg};
 //! use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
 //! use cliargs::validators::validate_number;
 //! use cliargs::errors::InvalidOption;
+//! use cliargs::Help;
 //!
 //! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
 //! let opt_cfgs = vec![
@@ -183,6 +187,18 @@
 //!     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
 //!     Err(err) => panic!("Invalid option: {}", err.option()),
 //! }
+//!
+//! let opt_cfgs = cmd.opt_cfgs();
+//!
+//! let mut help = Help::new();
+//! help.add_text("This is the usage description.".to_string());
+//! help.add_opts_with_margins(opt_cfgs, 2, 0);
+//! help.print();
+//!
+//! // (stdout)
+//! // This is the usage description.
+//! //   --foo-bar, -f    This is description of foo-bar.
+//! //   --bar, -z <num>  This is description of baz.
 //! ```
 //!
 //! ## Parse for a OptStore struct
@@ -220,6 +236,45 @@
 //! it doesn't represent an array which contains only one empty string.
 //! If you want to specify an array which contains only one emtpy string, write nothing after `=` symbol, like
 //! `#[opt(cfg="=")]`.
+//!
+//! ```
+//! use cliargs::Cmd;
+//! use cliargs::errors::InvalidOption;
+//! use cliargs::Help;
+//!
+//! #[derive(cliargs::OptStore)]
+//! struct MyOptions {
+//!     #[opt(cfg = "f,foo-bar", desc="The description of foo_bar.")]
+//!     foo_bar: bool,
+//!     #[opt(cfg = "b,baz", desc="The description of baz.", arg="<s>")]
+//!     baz: String,
+//! }
+//! let mut my_options = MyOptions::with_defaults();
+//!
+//! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+//! match cmd.parse_for(&mut my_options) {
+//!     Ok(_) => { /* ... */ },
+//!     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
+//!     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
+//!     Err(InvalidOption::OptionNeedsArg { option, .. }) => { /* ... */ },
+//!     Err(InvalidOption::OptionTakesNoArg { option, .. }) => { /* ... */ },
+//!     Err(InvalidOption::OptionIsNotArray { option, .. }) => { /* ... */ },
+//!     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
+//!     Err(err) => panic!("Invalid option: {}", err.option()),
+//! }
+//!
+//! let opt_cfgs = cmd.opt_cfgs();
+//!
+//! let mut help = Help::new();
+//! help.add_text("This is the usage description.".to_string());
+//! help.add_opts_with_margins(opt_cfgs, 2, 0);
+//! help.print();
+//!
+//! // (stdout)
+//! // This is the usage description.
+//! //   -f, --foo-bar  This is description of foo_bar.
+//! //   -z, --baz <s>  This is description of baz.
+//! ```
 
 /// Enums for errors that can occur when parsing command line arguments.
 pub mod errors;
