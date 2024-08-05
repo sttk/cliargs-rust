@@ -49,14 +49,14 @@ impl<'a> Cmd<'a> {
             Ok(())
         };
 
-        let take_args = |_arg: &str| false;
+        let take_opt_args = |_arg: &str| false;
 
         if !self._leaked_strs.is_empty() {
             match parse_args(
                 &self._leaked_strs[1..],
                 collect_args,
                 collect_opts,
-                take_args,
+                take_opt_args,
             ) {
                 Ok(_) => {}
                 Err(err) => return Err(err),

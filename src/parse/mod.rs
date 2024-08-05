@@ -14,7 +14,7 @@ fn parse_args<'a, F1, F2, F3>(
     args: &[&'a str],
     mut collect_args: F1,
     mut collect_opts: F2,
-    take_args: F3,
+    take_opt_args: F3,
 ) -> Result<(), InvalidOption>
 where
     F1: FnMut(&'a str),
@@ -84,7 +84,7 @@ where
             }
 
             if i == arg.len() {
-                if take_args(arg) && i_arg < args.len() - 1 {
+                if take_opt_args(arg) && i_arg < args.len() - 1 {
                     prev_opt_taking_args = arg;
                     continue 'L0;
                 }
@@ -148,7 +148,7 @@ where
             }
 
             if i == arg.len() && !name.is_empty() {
-                if take_args(name) && i_arg < args.len() - 1 {
+                if take_opt_args(name) && i_arg < args.len() - 1 {
                     prev_opt_taking_args = name;
                 } else {
                     match collect_opts(name, None) {
