@@ -39,6 +39,7 @@ impl<'a> Cmd<'a> {
     pub fn parse(&mut self) -> Result<(), InvalidOption> {
         let collect_args = |arg| {
             self.args.push(arg);
+            false
         };
 
         let collect_opts = |name, option| {

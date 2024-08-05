@@ -149,6 +149,7 @@ impl<'a> Cmd<'a> {
 
         let collect_args = |arg| {
             self.args.push(arg);
+            false
         };
 
         let mut str_refs: Vec<&'a str> = Vec::with_capacity(opt_cfgs.len());

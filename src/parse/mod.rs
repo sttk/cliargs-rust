@@ -15,9 +15,9 @@ fn parse_args<'a, F1, F2, F3>(
     mut collect_args: F1,
     mut collect_opts: F2,
     take_opt_args: F3,
-) -> Result<(), InvalidOption>
+) -> Result<usize, InvalidOption>
 where
-    F1: FnMut(&'a str),
+    F1: FnMut(&'a str) -> bool,
     F2: FnMut(&'a str, Option<&'a str>) -> Result<(), InvalidOption>,
     F3: Fn(&str) -> bool,
 {
@@ -27,7 +27,9 @@ where
 
     'L0: for (i_arg, arg) in args.iter().enumerate() {
         if is_non_opt {
-            collect_args(arg);
+            if collect_args(arg) {
+                return Ok(i_arg);
+            }
         } else if !prev_opt_taking_args.is_empty() {
             match collect_opts(prev_opt_taking_args, Some(arg)) {
                 Err(err) => {
@@ -100,7 +102,9 @@ where
             }
         } else if arg.starts_with("-") {
             if arg.len() == 1 {
-                collect_args(arg);
+                if collect_args(arg) {
+                    return Ok(i_arg);
+                }
                 continue 'L0;
             }
 
@@ -163,13 +167,15 @@ where
                 }
             }
         } else {
-            collect_args(arg);
+            if collect_args(arg) {
+                return Ok(i_arg);
+            }
         }
     }
 
     match first_err {
         Some(err) => Err(err),
-        None => Ok(()),
+        None => Ok(args.len()),
     }
 }
 
