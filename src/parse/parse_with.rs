@@ -140,7 +140,7 @@ impl<'a> Cmd<'a> {
             return Ok(());
         }
 
-        let take_args = |opt: &str| {
+        let take_opt_args = |opt: &str| {
             if let Some(i) = cfg_map.get(opt) {
                 return opt_cfgs[*i].has_arg;
             }
@@ -237,7 +237,7 @@ impl<'a> Cmd<'a> {
             &self._leaked_strs[1..],
             collect_args,
             collect_opts,
-            take_args,
+            take_opt_args,
         );
 
         for str_ref in str_refs {
