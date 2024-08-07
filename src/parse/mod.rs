@@ -8,6 +8,10 @@ mod parse_with;
 mod parse_for;
 pub use parse_for::OptStore;
 
+mod parse_sub;
+mod parse_sub_for;
+mod parse_sub_with;
+
 use crate::errors::InvalidOption;
 
 fn parse_args<'a, F1, F2, F3>(
