@@ -57,6 +57,7 @@ impl<'a> Cmd<'a> {
                 collect_args,
                 collect_opts,
                 take_opt_args,
+                false,
             ) {
                 Ok(_) => {}
                 Err(err) => return Err(err),
