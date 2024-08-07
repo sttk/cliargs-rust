@@ -40,7 +40,7 @@ impl OptCfg {
     }
 }
 
-impl Cmd<'_> {
+impl<'b> Cmd<'_> {
     /// Parses command line arguments and set their option values to the option store which is
     /// passed as an argument.
     ///
@@ -113,6 +113,96 @@ impl Cmd<'_> {
             Err(err) => return Err(err),
         }
         opt_store.set_field_values(&self.opts)
+    }
+
+    /// Parse command line arguments until the first command argument and set their option values
+    /// to the option store which is passed as an argument.
+    ///
+    /// This method creates and returns a new [Cmd] instance that holds the command line arguments
+    /// starting from the first command argument.
+    ///
+    /// Within this method, a vector of [OptCfg] is made from the fields of the option store.
+    /// This [OptCfg] vector is set to the public field `cfgs` of the [Cmd] instance.
+    /// If you want to access this option configurations, get them from this field.
+    ///
+    /// An option configuration corresponding to each field of an option store is determined by
+    /// its type and `opt` field attribute.
+    /// If the type is bool, the option takes no argument.
+    /// If the type is integer, floating point number or string, the option can takes single option
+    /// argument, therefore it can appear once in command line arguments.
+    /// If the type is a vector, the option can takes multiple option arguments, therefore it can
+    /// appear multiple times in command line arguments.
+    ///
+    /// A `opt` field attribute can have the following pairs of name and value: one is `cfg` to
+    /// specify `names` and `defaults` fields of [OptCfg] struct, another is `desc` to specify
+    /// `desc` field, and yet another is `arg` to specify `arg_in_help` field.
+    ///
+    /// The format of `cfg` is like `cfg="f,foo=123"`.
+    /// The left side of the equal sign is the option name(s), and the right side is the default
+    /// value(s).
+    /// If there is no equal sign, it is determined that only the option name is specified.
+    /// If you want to specify multiple option names, separate them with commas.
+    /// If you want to specify multiple default values, separate them with commas and round them
+    /// with square brackets, like `[1,2,3]`.
+    /// If you want to use your favorite carachter as a separator, you can use it by putting it on
+    /// the left side of the open square bracket, like `/[1/2/3]`.
+    ///
+    /// NOTE: A default value of empty string array option in a field attribute is `[]`, like
+    /// `#[opt(cfg="=[]")]`, but it doesn't represent an array which contains only one empty
+    /// string.
+    /// If you want to specify an array which contains only one emtpy string, write nothing after
+    /// `=` symbol, like `#[opt(cfg="=")]`.
+    ///
+    /// ```
+    /// use cliargs::Cmd;
+    /// use cliargs::errors::InvalidOption;
+    ///
+    /// #[derive(cliargs::OptStore)]
+    /// struct MyOptions {
+    ///     #[opt(cfg = "f,foo-bar", desc="The description of foo_bar.")]
+    ///     foo_bar: bool,
+    ///     #[opt(cfg = "b,baz", desc="The description of baz.", arg="<s>")]
+    ///     baz: String,
+    /// }
+    /// let mut my_options = MyOptions::with_defaults();
+    ///
+    /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    /// match cmd.parse_until_sub_cmd_for(&mut my_options) {
+    ///     Ok(Some(mut sub_cmd)) => {
+    ///         let sub_cmd_name = sub_cmd.name();
+    ///         match sub_cmd.parse() {
+    ///             Ok(_) => { /* ... */ },
+    ///             Err(err) => panic!("Invalid option: {}", err.option()),
+    ///         }
+    ///     },
+    ///     Ok(None) => { /* ... */ },
+    ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
+    ///     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionNeedsArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionTakesNoArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionIsNotArray { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
+    ///     Err(err) => panic!("Invalid option: {}", err.option()),
+    /// }
+    ///
+    /// let cfgs = cmd.opt_cfgs();
+    /// ```
+    pub fn parse_until_sub_cmd_for<T: OptStore>(
+        &mut self,
+        opt_store: &mut T,
+    ) -> Result<Option<Cmd<'b>>, InvalidOption> {
+        let cfgs = opt_store.make_opt_cfgs();
+        match self.parse_until_sub_cmd_with(cfgs) {
+            Ok(None) => {
+                opt_store.set_field_values(&self.opts)?;
+                return Ok(None);
+            }
+            Ok(Some(sub_cmd)) => {
+                opt_store.set_field_values(&self.opts)?;
+                return Ok(Some(sub_cmd));
+            }
+            Err(err) => return Err(err),
+        }
     }
 }
 
@@ -1690,5 +1780,154 @@ mod tests_of_parse_for {
         assert_eq!(store.u128_opt, Some(5));
         assert_eq!(store.f32_opt, Some(-0.1));
         assert_eq!(store.f64_opt, Some(2.3));
+    }
+}
+
+#[cfg(test)]
+mod tests_of_parse_util_sub_cmd_for {
+    use super::*;
+    use crate as cliargs;
+
+    #[derive(cliargs::OptStore, Debug)]
+    struct MyOptions {
+        #[opt(cfg = "foo,f")]
+        foo: bool,
+    }
+
+    #[derive(cliargs::OptStore, Debug)]
+    struct SubOptions {
+        #[opt(cfg = "bar,b")]
+        bar: bool,
+    }
+
+    #[test]
+    fn get_sub_cmd() {
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "--bar".to_string(),
+        ]);
+
+        let mut my_options = MyOptions::with_defaults();
+        let mut sub_options = SubOptions::with_defaults();
+
+        match cmd.parse_until_sub_cmd_for(&mut my_options) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(sub_cmd.name(), "sub");
+                assert_eq!(sub_cmd.args(), &[] as &[&str]);
+                assert_eq!(sub_cmd.has_opt("bar"), false);
+                assert_eq!(sub_cmd.opt_arg("fbar"), None);
+                assert_eq!(sub_cmd.opt_args("bar"), None);
+
+                let _ = sub_cmd.parse_for(&mut sub_options);
+                assert_eq!(sub_cmd.name(), "sub");
+                assert_eq!(sub_cmd.args(), &[] as &[&str]);
+                assert_eq!(sub_cmd.has_opt("bar"), true);
+                assert_eq!(sub_cmd.opt_arg("bar"), None);
+                assert_eq!(sub_cmd.opt_args("bar"), Some(&[] as &[&str]));
+
+                assert_eq!(sub_cmd.cfgs.len(), 1);
+                assert_eq!(sub_cmd.cfgs[0].store_key, "bar".to_string());
+                assert_eq!(
+                    sub_cmd.cfgs[0].names,
+                    vec!["bar".to_string(), "b".to_string()]
+                );
+                assert_eq!(sub_cmd.cfgs[0].has_arg, false);
+                assert_eq!(sub_cmd.cfgs[0].is_array, false);
+                assert_eq!(sub_cmd.cfgs[0].defaults, None);
+                assert_eq!(sub_cmd.cfgs[0].desc, "".to_string());
+                assert_eq!(sub_cmd.cfgs[0].arg_in_help, "".to_string());
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
+        assert_eq!(cmd.has_opt("foo"), true);
+        assert_eq!(cmd.opt_arg("foo"), None);
+        assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "foo".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        assert_eq!(my_options.foo, true);
+        assert_eq!(sub_options.bar, true);
+    }
+
+    #[test]
+    fn no_sub_cmd() {
+        let mut my_options = MyOptions::with_defaults();
+
+        let mut cmd = Cmd::with_strings(["app".to_string(), "--foo".to_string()]);
+
+        match cmd.parse_until_sub_cmd_for(&mut my_options) {
+            Ok(Some(_)) => assert!(false),
+            Ok(None) => {}
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
+        assert_eq!(cmd.has_opt("foo"), true);
+        assert_eq!(cmd.opt_arg("foo"), None);
+        assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "foo".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        assert_eq!(my_options.foo, true);
+    }
+
+    #[test]
+    fn fail_to_parse() {
+        let mut my_options = MyOptions::with_defaults();
+
+        let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--goo".to_string()]);
+
+        match cmd.parse_until_sub_cmd_for(&mut my_options) {
+            Ok(_) => assert!(false),
+            Err(InvalidOption::UnconfiguredOption { option }) => {
+                assert_eq!(option, "goo");
+            }
+            Err(_) => {}
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.has_opt("foo"), false);
+        assert_eq!(cmd.opt_arg("foo"), None);
+        assert_eq!(cmd.opt_args("foo"), None);
+        assert_eq!(cmd.has_opt("f"), false);
+        assert_eq!(cmd.opt_arg("f"), None);
+        assert_eq!(cmd.opt_args("f"), None);
+        assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.has_opt("goo"), false);
+        assert_eq!(cmd.opt_arg("goo"), None);
+        assert_eq!(cmd.opt_args("goo"), None);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "foo".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+
+        assert_eq!(my_options.foo, false);
     }
 }

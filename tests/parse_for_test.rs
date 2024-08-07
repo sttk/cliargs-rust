@@ -61,3 +61,73 @@ mod tests_of_parse_for {
         assert_eq!(cmd.opt_cfgs()[0].arg_in_help, "".to_string());
     }
 }
+
+mod tests_of_parse_until_sub_cmd_for {
+    use cliargs::validators::*;
+    use cliargs::Cmd;
+
+    #[derive(cliargs::OptStore)]
+    struct Options1 {
+        #[opt(cfg = "foo-bar")]
+        fooBar: u32,
+        v: bool,
+    }
+
+    #[derive(cliargs::OptStore)]
+    struct Options2 {
+        qux: bool,
+        q: String,
+    }
+
+    #[test]
+    fn it_should_parse_command_line_arguments_containing_subcommand() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "--foo-bar=123".to_string(),
+            "-v".to_string(),
+            "baz".to_string(),
+            "--qux".to_string(),
+            "corge".to_string(),
+            "-q=ABC".to_string(),
+        ]);
+
+        let mut options1 = Options1::with_defaults();
+        let mut options2 = Options2::with_defaults();
+
+        if let Some(mut sub_cmd) = cmd.parse_until_sub_cmd_for(&mut options1).unwrap() {
+            let _ = sub_cmd.parse_for(&mut options2).unwrap();
+
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &[] as &[&str]);
+            assert_eq!(cmd.has_opt("fooBar"), true);
+            assert_eq!(cmd.opt_arg("fooBar"), Some("123"));
+            assert_eq!(cmd.opt_args("fooBar"), Some(&["123"] as &[&str]));
+            assert_eq!(cmd.has_opt("v"), true);
+            assert_eq!(cmd.opt_arg("v"), None);
+            assert_eq!(cmd.opt_args("v"), Some(&[] as &[&str]));
+
+            assert_eq!(cmd.has_opt("foo-bar"), false);
+            assert_eq!(cmd.opt_arg("foo-bar"), None);
+            assert_eq!(cmd.opt_args("foo-bar"), None);
+            assert_eq!(cmd.has_opt("f"), false);
+            assert_eq!(cmd.opt_arg("f"), None);
+            assert_eq!(cmd.opt_args("f"), None);
+
+            assert_eq!(sub_cmd.name(), "baz");
+            assert_eq!(sub_cmd.args(), &["corge"]);
+            assert_eq!(sub_cmd.has_opt("qux"), true);
+            assert_eq!(sub_cmd.opt_arg("qux"), None);
+            assert_eq!(sub_cmd.opt_args("qux"), Some(&[] as &[&str]));
+            assert_eq!(sub_cmd.has_opt("q"), true);
+            assert_eq!(sub_cmd.opt_arg("q"), Some("ABC"));
+            assert_eq!(sub_cmd.opt_args("q"), Some(&["ABC"] as &[&str]));
+        } else {
+            assert!(false);
+        }
+
+        assert_eq!(options1.fooBar, 123);
+        assert_eq!(options1.v, true);
+        assert_eq!(options2.qux, true);
+        assert_eq!(options2.q, "ABC");
+    }
+}

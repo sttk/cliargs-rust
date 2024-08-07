@@ -318,6 +318,7 @@ pub struct Cmd<'a> {
     cfgs: Vec<OptCfg>,
 
     _leaked_strs: Vec<&'a str>,
+    _num_of_args: usize,
 }
 
 impl<'a> Drop for Cmd<'a> {
@@ -339,7 +340,7 @@ impl fmt::Debug for Cmd<'_> {
     }
 }
 
-impl<'a> Cmd<'a> {
+impl<'b, 'a> Cmd<'a> {
     /// Creates a `Cmd` instance with command line arguments obtained from [std::env::args_os].
     ///
     /// Since [std::env::args_os] returns a vector of [OsString] and they can contain invalid
@@ -413,12 +414,15 @@ impl<'a> Cmd<'a> {
             cmd_name_start = 0;
         }
 
+        let _num_of_args = _leaked_strs.len();
+
         Ok(Cmd {
             name: &_leaked_strs[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
             _leaked_strs,
+            _num_of_args,
         })
     }
 
@@ -449,13 +453,24 @@ impl<'a> Cmd<'a> {
             cmd_name_start = 0;
         };
 
+        let _num_of_args = _leaked_strs.len();
+
         Cmd {
             name: &_leaked_strs[0][cmd_name_start..],
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
             _leaked_strs,
+            _num_of_args,
         }
+    }
+
+    fn sub_cmd(&'a self, from_index: usize) -> Cmd<'b> {
+        Cmd::with_strings(
+            self._leaked_strs[from_index..(self._num_of_args)]
+                .into_iter()
+                .map(|s| s.to_string()),
+        )
     }
 
     /// Returns the command name.

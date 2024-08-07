@@ -8,7 +8,7 @@ use crate::Cmd;
 use crate::OptCfg;
 use std::collections::HashMap;
 
-impl<'a> Cmd<'a> {
+impl<'b, 'a> Cmd<'a> {
     /// Parses command line arguments with option configurations.
     ///
     /// This method divides command line arguments to command arguments and options.
@@ -65,7 +65,87 @@ impl<'a> Cmd<'a> {
         Ok(())
     }
 
-    pub fn parse_args_with(
+    /// Parses command line arguments with option configurations but stops parsing when
+    /// encountering first command argument.
+    ///
+    /// This method creates and returns a new [Cmd] instance that holds the command line arguments
+    /// starting from the first command argument.
+    ///
+    /// This method divides command line arguments to command arguments and options.
+    /// And an option consists of a name and an option argument.
+    /// Options are divided to long format options and short format options.
+    /// About long/short format options, since they are same with `parse` method, see the comment
+    /// of that method.
+    ///
+    /// This method allows only options declared in option configurations, basically.
+    /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`,
+    /// `defaults`, `desc`, `arg_in_help`, and `validator`.
+    ///
+    /// The ownership of the vector of option configurations which is passed as an argument of
+    /// this method is moved to this method and set to the public field `cfgs` of [Cmd] instance.
+    /// If you want to access the option configurations after parsing, get them from this field.
+    ///
+    /// ```
+    /// use cliargs::{Cmd, OptCfg};
+    /// use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
+    /// use cliargs::validators::validate_number;
+    /// use cliargs::errors::InvalidOption;
+    ///
+    /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    /// let opt_cfgs = vec![
+    ///     OptCfg::with(&[
+    ///         names(&["foo-bar"]),
+    ///         desc("This is description of foo-bar."),
+    ///     ]),
+    ///     OptCfg::with(&[
+    ///         names(&["baz", "z"]),
+    ///         has_arg(true),
+    ///         defaults(&["1"]),
+    ///         desc("This is description of baz."),
+    ///         arg_in_help("<num>"),
+    ///         validator(validate_number::<u32>),
+    ///     ]),
+    /// ];
+    ///
+    /// match cmd.parse_until_sub_cmd_with(opt_cfgs) {
+    ///     Ok(Some(mut sub_cmd)) => {
+    ///         let sub_cmd_name = sub_cmd.name();
+    ///         match sub_cmd.parse() {
+    ///             Ok(_) => { /* ... */ },
+    ///             Err(err) => panic!("Invalid option: {}", err.option()),
+    ///         }
+    ///     },
+    ///     Ok(None) => { /* ... */ },
+    ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
+    ///     Err(InvalidOption::UnconfiguredOption { option }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionNeedsArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionTakesNoArg { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionIsNotArray { option, .. }) => { /* ... */ },
+    ///     Err(InvalidOption::OptionArgIsInvalid { option, opt_arg, details, .. }) => { /* ... */ },
+    ///     Err(err) => panic!("Invalid option: {}", err.option()),
+    /// }
+    /// ```
+    pub fn parse_until_sub_cmd_with(
+        &mut self,
+        opt_cfgs: Vec<OptCfg>,
+    ) -> Result<Option<Cmd<'b>>, InvalidOption> {
+        match self.parse_args_with(&opt_cfgs, true) {
+            Ok(Some(idx)) => {
+                self.cfgs = opt_cfgs;
+                return Ok(Some(self.sub_cmd(idx)));
+            }
+            Ok(None) => {
+                self.cfgs = opt_cfgs;
+                return Ok(None);
+            }
+            Err(err) => {
+                self.cfgs = opt_cfgs;
+                return Err(err);
+            }
+        }
+    }
+
+    fn parse_args_with(
         &mut self,
         opt_cfgs: &Vec<OptCfg>,
         until_1st_arg: bool,
@@ -140,7 +220,7 @@ impl<'a> Cmd<'a> {
             }
         }
 
-        if self._leaked_strs.is_empty() {
+        if self._num_of_args == 0 {
             return Ok(None);
         }
 
@@ -238,7 +318,7 @@ impl<'a> Cmd<'a> {
         };
 
         let result = parse_args(
-            &self._leaked_strs[1..],
+            &self._leaked_strs[1..(self._num_of_args)],
             collect_args,
             collect_opts,
             take_opt_args,
@@ -285,7 +365,11 @@ impl<'a> Cmd<'a> {
             }
         }
 
-        result
+        if let Some(idx) = result? {
+            return Ok(Some(idx + 1)); // +1, because _parse_args parses from 1
+        }
+
+        Ok(None)
     }
 }
 
@@ -2045,5 +2129,136 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[1].defaults, None);
         assert_eq!(cmd.cfgs[1].desc, "".to_string());
         assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
+    }
+}
+
+#[cfg(test)]
+mod tests_of_parse_util_sub_cmd_with {
+    use super::*;
+    use crate::OptCfgParam::*;
+
+    #[test]
+    fn get_sub_cmd() {
+        let opt_cfgs1 = vec![OptCfg::with(&[names(&["foo", "f"])])];
+
+        let opt_cfgs2 = vec![OptCfg::with(&[names(&["bar", "b"])])];
+
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "--bar".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd_with(opt_cfgs1) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(sub_cmd.name(), "sub");
+                assert_eq!(sub_cmd.args(), &[] as &[&str]);
+                assert_eq!(sub_cmd.has_opt("bar"), false);
+                assert_eq!(sub_cmd.opt_arg("fbar"), None);
+                assert_eq!(sub_cmd.opt_args("bar"), None);
+
+                let _ = sub_cmd.parse_with(opt_cfgs2);
+                assert_eq!(sub_cmd.name(), "sub");
+                assert_eq!(sub_cmd.args(), &[] as &[&str]);
+                assert_eq!(sub_cmd.has_opt("bar"), true);
+                assert_eq!(sub_cmd.opt_arg("bar"), None);
+                assert_eq!(sub_cmd.opt_args("bar"), Some(&[] as &[&str]));
+
+                assert_eq!(sub_cmd.cfgs.len(), 1);
+                assert_eq!(sub_cmd.cfgs[0].store_key, "".to_string());
+                assert_eq!(
+                    sub_cmd.cfgs[0].names,
+                    vec!["bar".to_string(), "b".to_string()]
+                );
+                assert_eq!(sub_cmd.cfgs[0].has_arg, false);
+                assert_eq!(sub_cmd.cfgs[0].is_array, false);
+                assert_eq!(sub_cmd.cfgs[0].defaults, None);
+                assert_eq!(sub_cmd.cfgs[0].desc, "".to_string());
+                assert_eq!(sub_cmd.cfgs[0].arg_in_help, "".to_string());
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
+        assert_eq!(cmd.has_opt("foo"), true);
+        assert_eq!(cmd.opt_arg("foo"), None);
+        assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+    }
+
+    #[test]
+    fn no_sub_cmd() {
+        let opt_cfgs = vec![OptCfg::with(&[names(&["foo", "f"])])];
+
+        let mut cmd = Cmd::with_strings(["app".to_string(), "--foo".to_string()]);
+
+        match cmd.parse_until_sub_cmd_with(opt_cfgs) {
+            Ok(Some(_)) => assert!(false),
+            Ok(None) => {}
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
+        assert_eq!(cmd.has_opt("foo"), true);
+        assert_eq!(cmd.opt_arg("foo"), None);
+        assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo".to_string(), "f".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+    }
+
+    #[test]
+    fn fail_to_parse() {
+        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+
+        let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
+
+        match cmd.parse_until_sub_cmd_with(opt_cfgs) {
+            Ok(_) => assert!(false),
+            Err(InvalidOption::UnconfiguredOption { option }) => {
+                assert_eq!(option, "bar-foo");
+            }
+            Err(_) => {}
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.has_opt("foo-bar"), false);
+        assert_eq!(cmd.opt_arg("foo-bar"), None);
+        assert_eq!(cmd.opt_args("foo-bar"), None);
+        assert_eq!(cmd.has_opt("f"), false);
+        assert_eq!(cmd.opt_arg("f"), None);
+        assert_eq!(cmd.opt_args("f"), None);
+        assert_eq!(cmd.args(), &[] as &[&str]);
+
+        assert_eq!(cmd.has_opt("bar-foo"), false);
+        assert_eq!(cmd.opt_arg("bar-foo"), None);
+        assert_eq!(cmd.opt_args("bar-foo"), None);
+
+        assert_eq!(cmd.cfgs.len(), 1);
+        assert_eq!(cmd.cfgs[0].store_key, "".to_string());
+        assert_eq!(cmd.cfgs[0].names, vec!["foo-bar".to_string()]);
+        assert_eq!(cmd.cfgs[0].has_arg, false);
+        assert_eq!(cmd.cfgs[0].is_array, false);
+        assert_eq!(cmd.cfgs[0].defaults, None);
+        assert_eq!(cmd.cfgs[0].desc, "".to_string());
+        assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
     }
 }
