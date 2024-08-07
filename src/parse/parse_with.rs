@@ -59,13 +59,17 @@ impl<'a> Cmd<'a> {
     /// }
     /// ```
     pub fn parse_with(&mut self, opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
-        let result = self._parse_with(&opt_cfgs);
+        let result = self.parse_args_with(&opt_cfgs, false);
         self.cfgs = opt_cfgs;
-        result
+        result?;
+        Ok(())
     }
 
-    #[inline(always)]
-    fn _parse_with(&mut self, opt_cfgs: &Vec<OptCfg>) -> Result<(), InvalidOption> {
+    pub fn parse_args_with(
+        &mut self,
+        opt_cfgs: &Vec<OptCfg>,
+        until_1st_arg: bool,
+    ) -> Result<Option<usize>, InvalidOption> {
         let mut cfg_map = HashMap::<&str, usize>::new();
         let mut opt_map = HashMap::<&str, ()>::new();
 
@@ -137,7 +141,7 @@ impl<'a> Cmd<'a> {
         }
 
         if self._leaked_strs.is_empty() {
-            return Ok(());
+            return Ok(None);
         }
 
         let take_opt_args = |opt: &str| {
@@ -238,13 +242,12 @@ impl<'a> Cmd<'a> {
             collect_args,
             collect_opts,
             take_opt_args,
+            until_1st_arg,
         );
 
         for str_ref in str_refs {
             self._leaked_strs.push(str_ref);
         }
-
-        result?;
 
         for cfg in opt_cfgs.iter() {
             let store_key: &str = if !cfg.store_key.is_empty() {
@@ -282,7 +285,7 @@ impl<'a> Cmd<'a> {
             }
         }
 
-        Ok(())
+        result
     }
 }
 
