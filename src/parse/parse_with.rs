@@ -1468,8 +1468,6 @@ mod tests_of_parse_with {
             Err(_) => assert!(false),
         }
 
-        println!("cmd = {:?}", cmd);
-
         assert_eq!(cmd.name(), "app");
         assert_eq!(cmd.has_opt("foo"), false);
         assert_eq!(cmd.opt_arg("foo"), None);
