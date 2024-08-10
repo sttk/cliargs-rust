@@ -93,6 +93,7 @@ impl<'b> Cmd<'_> {
     /// let mut my_options = MyOptions::with_defaults();
     ///
     /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    ///
     /// match cmd.parse_for(&mut my_options) {
     ///     Ok(_) => { /* ... */ },
     ///     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
@@ -121,37 +122,8 @@ impl<'b> Cmd<'_> {
     /// This method creates and returns a new [Cmd] instance that holds the command line arguments
     /// starting from the first command argument.
     ///
-    /// Within this method, a vector of [OptCfg] is made from the fields of the option store.
-    /// This [OptCfg] vector is set to the public field `cfgs` of the [Cmd] instance.
-    /// If you want to access this option configurations, get them from this field.
-    ///
-    /// An option configuration corresponding to each field of an option store is determined by
-    /// its type and `opt` field attribute.
-    /// If the type is bool, the option takes no argument.
-    /// If the type is integer, floating point number or string, the option can takes single option
-    /// argument, therefore it can appear once in command line arguments.
-    /// If the type is a vector, the option can takes multiple option arguments, therefore it can
-    /// appear multiple times in command line arguments.
-    ///
-    /// A `opt` field attribute can have the following pairs of name and value: one is `cfg` to
-    /// specify `names` and `defaults` fields of [OptCfg] struct, another is `desc` to specify
-    /// `desc` field, and yet another is `arg` to specify `arg_in_help` field.
-    ///
-    /// The format of `cfg` is like `cfg="f,foo=123"`.
-    /// The left side of the equal sign is the option name(s), and the right side is the default
-    /// value(s).
-    /// If there is no equal sign, it is determined that only the option name is specified.
-    /// If you want to specify multiple option names, separate them with commas.
-    /// If you want to specify multiple default values, separate them with commas and round them
-    /// with square brackets, like `[1,2,3]`.
-    /// If you want to use your favorite carachter as a separator, you can use it by putting it on
-    /// the left side of the open square bracket, like `/[1/2/3]`.
-    ///
-    /// NOTE: A default value of empty string array option in a field attribute is `[]`, like
-    /// `#[opt(cfg="=[]")]`, but it doesn't represent an array which contains only one empty
-    /// string.
-    /// If you want to specify an array which contains only one emtpy string, write nothing after
-    /// `=` symbol, like `#[opt(cfg="=")]`.
+    /// This method parses command line arguments in the same way as the [Cmd::parse_for] method,
+    /// except that it only parses the command line arguments before the first command argument.
     ///
     /// ```
     /// use cliargs::Cmd;
@@ -167,6 +139,7 @@ impl<'b> Cmd<'_> {
     /// let mut my_options = MyOptions::with_defaults();
     ///
     /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+    ///
     /// match cmd.parse_until_sub_cmd_for(&mut my_options) {
     ///     Ok(Some(mut sub_cmd)) => {
     ///         let sub_cmd_name = sub_cmd.name();

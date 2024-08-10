@@ -71,19 +71,8 @@ impl<'b, 'a> Cmd<'a> {
     /// This method creates and returns a new [Cmd] instance that holds the command line arguments
     /// starting from the first command argument.
     ///
-    /// This method divides command line arguments to command arguments and options.
-    /// And an option consists of a name and an option argument.
-    /// Options are divided to long format options and short format options.
-    /// About long/short format options, since they are same with `parse` method, see the comment
-    /// of that method.
-    ///
-    /// This method allows only options declared in option configurations, basically.
-    /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`,
-    /// `defaults`, `desc`, `arg_in_help`, and `validator`.
-    ///
-    /// The ownership of the vector of option configurations which is passed as an argument of
-    /// this method is moved to this method and set to the public field `cfgs` of [Cmd] instance.
-    /// If you want to access the option configurations after parsing, get them from this field.
+    /// This method parses command line arguments in the same way as the [Cmd::parse_with] method,
+    /// except that it only parses the command line arguments before the first command argument.
     ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};

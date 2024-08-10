@@ -74,19 +74,8 @@ impl<'b, 'a> Cmd<'a> {
     /// This method creates and returns a new [Cmd] instance that holds the command line arguments
     /// starting from the first command argument.
     ///
-    /// This method divides command line arguments into options and command arguments based on
-    /// simple rules that are almost the same as POSIX & GNU:
-    /// arguments staring with `-` or `--` are treated as options, and others are treated as command
-    /// arguments.
-    /// If an `=` is found within an option, the part before the `=` is treated as the option name,
-    /// and the part after the `=` is treated as the option argument.
-    /// Options starting with `--` are long options and option starting with `-` are short options.
-    /// Multiple short options can be concatenated into a single command line argument.
-    /// If an argument is exactly `--`, all subsequent arguments are treated as command arguments.
-    ///
-    /// Since the results of parsing are stored into this `Cmd` instance, this method returns a
-    /// [Result] which contains an unit value (`()`) if succeeding, or a `errors::InvalidOption`
-    /// if failing.
+    /// This method parses command line arguments in the same way as the [Cmd::parse] method, except
+    /// that it only parses the command line arguments before the first command argument.
     ///
     /// ```rust
     /// use cliargs::Cmd;
