@@ -63,13 +63,12 @@ mod tests_of_parse_for {
 }
 
 mod tests_of_parse_until_sub_cmd_for {
-    use cliargs::validators::*;
     use cliargs::Cmd;
 
     #[derive(cliargs::OptStore)]
     struct Options1 {
         #[opt(cfg = "foo-bar")]
-        fooBar: u32,
+        foo_bar: u32,
         v: bool,
     }
 
@@ -99,9 +98,9 @@ mod tests_of_parse_until_sub_cmd_for {
 
             assert_eq!(cmd.name(), "app");
             assert_eq!(cmd.args(), &[] as &[&str]);
-            assert_eq!(cmd.has_opt("fooBar"), true);
-            assert_eq!(cmd.opt_arg("fooBar"), Some("123"));
-            assert_eq!(cmd.opt_args("fooBar"), Some(&["123"] as &[&str]));
+            assert_eq!(cmd.has_opt("foo_bar"), true);
+            assert_eq!(cmd.opt_arg("foo_bar"), Some("123"));
+            assert_eq!(cmd.opt_args("foo_bar"), Some(&["123"] as &[&str]));
             assert_eq!(cmd.has_opt("v"), true);
             assert_eq!(cmd.opt_arg("v"), None);
             assert_eq!(cmd.opt_args("v"), Some(&[] as &[&str]));
@@ -125,7 +124,7 @@ mod tests_of_parse_until_sub_cmd_for {
             assert!(false);
         }
 
-        assert_eq!(options1.fooBar, 123);
+        assert_eq!(options1.foo_bar, 123);
         assert_eq!(options1.v, true);
         assert_eq!(options2.qux, true);
         assert_eq!(options2.q, "ABC");
