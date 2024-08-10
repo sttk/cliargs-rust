@@ -67,6 +67,47 @@ mod tests_of_parse {
     }
 }
 
+mod tests_of_parse_until_sub_cmd {
+    use cliargs;
+
+    #[test]
+    fn it_should_parse_command_line_arguments_containing_subcommand() {
+        let mut cmd = cliargs::Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "--foo-bar=123".to_string(),
+            "-v".to_string(),
+            "baz".to_string(),
+            "--qux".to_string(),
+            "corge".to_string(),
+            "-q=ABC".to_string(),
+        ]);
+
+        if let Some(mut sub_cmd) = cmd.parse_until_sub_cmd().unwrap() {
+            let _ = sub_cmd.parse().unwrap();
+
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &[] as &[&str]);
+            assert_eq!(cmd.has_opt("foo-bar"), true);
+            assert_eq!(cmd.opt_arg("foo-bar"), Some("123"));
+            assert_eq!(cmd.opt_args("foo-bar"), Some(&["123"] as &[&str]));
+            assert_eq!(cmd.has_opt("v"), true);
+            assert_eq!(cmd.opt_arg("v"), None);
+            assert_eq!(cmd.opt_args("v"), Some(&[] as &[&str]));
+
+            assert_eq!(sub_cmd.name(), "baz");
+            assert_eq!(sub_cmd.args(), &["corge"]);
+            assert_eq!(sub_cmd.has_opt("qux"), true);
+            assert_eq!(sub_cmd.opt_arg("qux"), None);
+            assert_eq!(sub_cmd.opt_args("qux"), Some(&[] as &[&str]));
+            assert_eq!(sub_cmd.has_opt("q"), true);
+            assert_eq!(sub_cmd.opt_arg("q"), Some("ABC"));
+            assert_eq!(sub_cmd.opt_args("q"), Some(&["ABC"] as &[&str]));
+        } else {
+            assert!(false);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests_of_errors {
     use cliargs;

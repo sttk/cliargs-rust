@@ -28,13 +28,13 @@ where
 
     'L0: for (i_arg, arg) in args.iter().enumerate() {
         if is_non_opt {
-            collect_args(arg);
             if until_1st_arg {
                 if let Some(err) = first_err {
                     return Err(err);
                 }
                 return Ok(Some(i_arg));
             }
+            collect_args(arg);
         } else if !prev_opt_taking_args.is_empty() {
             match collect_opts(prev_opt_taking_args, Some(arg)) {
                 Err(err) => {
@@ -107,13 +107,13 @@ where
             }
         } else if arg.starts_with("-") {
             if arg.len() == 1 {
-                collect_args(arg);
                 if until_1st_arg {
                     if let Some(err) = first_err {
                         return Err(err);
                     }
                     return Ok(Some(i_arg));
                 }
+                collect_args(arg);
                 continue 'L0;
             }
 
@@ -176,13 +176,13 @@ where
                 }
             }
         } else {
-            collect_args(arg);
             if until_1st_arg {
                 if let Some(err) = first_err {
                     return Err(err);
                 }
                 return Ok(Some(i_arg));
             }
+            collect_args(arg);
         }
     }
 
