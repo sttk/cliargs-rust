@@ -33,11 +33,11 @@ impl<'b, 'a> Cmd<'a> {
     ///
     /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
     /// let opt_cfgs = vec![
-    ///     OptCfg::with(&[
+    ///     OptCfg::with([
     ///         names(&["foo-bar"]),
     ///         desc("This is description of foo-bar."),
     ///     ]),
-    ///     OptCfg::with(&[
+    ///     OptCfg::with([
     ///         names(&["baz", "z"]),
     ///         has_arg(true),
     ///         defaults(&["1"]),
@@ -82,11 +82,11 @@ impl<'b, 'a> Cmd<'a> {
     ///
     /// let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
     /// let opt_cfgs = vec![
-    ///     OptCfg::with(&[
+    ///     OptCfg::with([
     ///         names(&["foo-bar"]),
     ///         desc("This is description of foo-bar."),
     ///     ]),
-    ///     OptCfg::with(&[
+    ///     OptCfg::with([
     ///         names(&["baz", "z"]),
     ///         has_arg(true),
     ///         defaults(&["1"]),
@@ -458,7 +458,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_zero_opt() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string()]);
 
@@ -488,7 +488,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_one_cmd_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "foo-bar".to_string()]);
 
@@ -518,7 +518,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_one_long_opt() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--foo-bar".to_string()]);
 
@@ -548,7 +548,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_one_short_opt() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
 
@@ -578,7 +578,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_one_different_long_opt() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
 
@@ -615,7 +615,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_and_one_different_short_opt() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-b".to_string()]);
 
@@ -653,8 +653,8 @@ mod tests_of_parse_with {
     #[test]
     fn any_opt_cfg_and_one_different_long_opt() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"])]),
-            OptCfg::with(&[names(&["*"])]),
+            OptCfg::with([names(&["foo-bar"])]),
+            OptCfg::with([names(&["*"])]),
         ];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
@@ -696,10 +696,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn any_opt_cfg_and_one_different_short_opt() {
-        let opt_cfgs = vec![
-            OptCfg::with(&[names(&["f"])]),
-            OptCfg::with(&[names(&["*"])]),
-        ];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])]), OptCfg::with([names(&["*"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-b".to_string()]);
 
@@ -740,7 +737,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_arg_and_one_long_opt_has_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"]), has_arg(true)])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"]), has_arg(true)])];
 
         let mut cmd = Cmd::with_strings([
             "app".to_string(),
@@ -771,7 +768,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_arg_and_one_short_opt_has_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"]), has_arg(true)])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"]), has_arg(true)])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "ABC".to_string()]);
 
@@ -798,7 +795,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_arg_but_one_long_opt_has_no_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"]), has_arg(true)])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"]), has_arg(true)])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar".to_string()]);
 
@@ -839,7 +836,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_arg_but_one_short_oopt_has_no_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"]), has_arg(true)])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"]), has_arg(true)])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
 
@@ -879,7 +876,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_no_arg_but_one_long_opt_has_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings([
             "app".to_string(),
@@ -908,7 +905,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar=ABC".to_string()]);
 
@@ -945,7 +942,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo-bar".to_string(), "".to_string()]);
@@ -971,7 +968,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar=".to_string()]);
 
@@ -1011,7 +1008,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_no_arg_but_one_short_opt_has_arg() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "ABC".to_string()]);
 
@@ -1036,7 +1033,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f=ABC".to_string()]);
 
@@ -1073,7 +1070,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string(), "".to_string()]);
 
@@ -1098,7 +1095,7 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
 
-        let opt_cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f=".to_string()]);
 
@@ -1138,7 +1135,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_no_arg_but_is_array() {
-        let opt_cfgs = vec![OptCfg::with(&[
+        let opt_cfgs = vec![OptCfg::with([
             names(&["foo-bar"]),
             has_arg(false),
             is_array(true),
@@ -1184,8 +1181,8 @@ mod tests_of_parse_with {
     #[test]
     fn one_cfg_is_array_and_opt_has_no_arg() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true), is_array(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true), is_array(true)]),
         ];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo-bar".to_string()]);
@@ -1232,8 +1229,8 @@ mod tests_of_parse_with {
         assert_eq!(cmd.cfgs[1].arg_in_help, "".to_string());
 
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true), is_array(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true), is_array(true)]),
         ];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
@@ -1283,8 +1280,8 @@ mod tests_of_parse_with {
     #[test]
     fn one_cfg_is_array_and_opt_has_one_arg() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true), is_array(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true), is_array(true)]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1330,8 +1327,8 @@ mod tests_of_parse_with {
     #[test]
     fn one_cfg_is_array_and_opt_has_multiple_args() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true), is_array(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true), is_array(true)]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1380,7 +1377,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_has_name_and_aliase_and_arg_matches_them() {
-        let opt_cfgs = vec![OptCfg::with(&[
+        let opt_cfgs = vec![OptCfg::with([
             names(&["foo-bar", "f"]),
             has_arg(true),
             is_array(true),
@@ -1425,8 +1422,8 @@ mod tests_of_parse_with {
     #[test]
     fn one_cfg_is_not_array_but_opts_are_multiple() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true)]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1465,8 +1462,8 @@ mod tests_of_parse_with {
         assert_eq!(cmd.args(), &[] as &[&str]);
 
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"]), has_arg(true)]),
-            OptCfg::with(&[names(&["f"]), has_arg(true)]),
+            OptCfg::with([names(&["foo-bar"]), has_arg(true)]),
+            OptCfg::with([names(&["f"]), has_arg(true)]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1524,8 +1521,8 @@ mod tests_of_parse_with {
     #[test]
     fn specify_defaults() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["bar"]), has_arg(true), defaults(&["A"])]),
-            OptCfg::with(&[
+            OptCfg::with([names(&["bar"]), has_arg(true), defaults(&["A"])]),
+            OptCfg::with([
                 names(&["baz"]),
                 has_arg(true),
                 is_array(true),
@@ -1572,7 +1569,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn one_cfg_requires_no_arg_but_has_defaults() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"]), defaults(&["A"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"]), defaults(&["A"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string()]);
 
@@ -1614,10 +1611,10 @@ mod tests_of_parse_with {
     #[test]
     fn multiple_args() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo-bar"])]),
-            OptCfg::with(&[names(&["baz", "z"]), has_arg(true), is_array(true)]),
-            OptCfg::with(&[names(&["corge"]), has_arg(true), defaults(&["99"])]),
-            OptCfg::with(&[names(&["*"])]),
+            OptCfg::with([names(&["foo-bar"])]),
+            OptCfg::with([names(&["baz", "z"]), has_arg(true), is_array(true)]),
+            OptCfg::with([names(&["corge"]), has_arg(true), defaults(&["99"])]),
+            OptCfg::with([names(&["*"])]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1685,7 +1682,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn parse_all_args_even_if_error() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo", "f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo", "f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-ef".to_string(), "bar".to_string()]);
 
@@ -1725,8 +1722,8 @@ mod tests_of_parse_with {
     #[test]
     fn parse_all_args_even_if_short_option_value_is_error() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["e"])]),
-            OptCfg::with(&[names(&["foo", "f"])]),
+            OptCfg::with([names(&["e"])]),
+            OptCfg::with([names(&["foo", "f"])]),
         ];
 
         let mut cmd =
@@ -1779,8 +1776,8 @@ mod tests_of_parse_with {
     #[test]
     fn parse_all_args_even_if_long_option_value_is_error() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["e"])]),
-            OptCfg::with(&[names(&["foo", "f"])]),
+            OptCfg::with([names(&["e"])]),
+            OptCfg::with([names(&["foo", "f"])]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -1836,10 +1833,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn ignore_cfg_if_names_is_empty() {
-        let opt_cfgs = vec![
-            OptCfg::with(&[names(&[])]),
-            OptCfg::with(&[names(&["foo"])]),
-        ];
+        let opt_cfgs = vec![OptCfg::with([names(&[])]), OptCfg::with([names(&["foo"])])];
 
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "bar".to_string()]);
@@ -1874,8 +1868,8 @@ mod tests_of_parse_with {
     #[test]
     fn option_name_is_duplicated() {
         let opt_cfgs = vec![
-            OptCfg::with(&[names(&["foo", "f"])]),
-            OptCfg::with(&[names(&["bar", "f"])]),
+            OptCfg::with([names(&["foo", "f"])]),
+            OptCfg::with([names(&["bar", "f"])]),
         ];
 
         let mut cmd =
@@ -1925,7 +1919,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn use_store_key() {
-        let opt_cfgs = vec![OptCfg::with(&[store_key("FooBar"), names(&["f", "foo"])])];
+        let opt_cfgs = vec![OptCfg::with([store_key("FooBar"), names(&["f", "foo"])])];
 
         let mut cmd =
             Cmd::with_strings(["app".to_string(), "--foo".to_string(), "bar".to_string()]);
@@ -1956,7 +1950,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn use_store_key_as_option_name_if_names_is_empty() {
-        let opt_cfgs = vec![OptCfg::with(&[store_key("FooBar")])];
+        let opt_cfgs = vec![OptCfg::with([store_key("FooBar")])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--FooBar".to_string()]);
 
@@ -1988,8 +1982,8 @@ mod tests_of_parse_with {
     #[test]
     fn store_key_is_duplicated() {
         let opt_cfgs = vec![
-            OptCfg::with(&[store_key("FooBar"), names(&["f", "foo"])]),
-            OptCfg::with(&[store_key("FooBar"), names(&["b", "bar"])]),
+            OptCfg::with([store_key("FooBar"), names(&["f", "foo"])]),
+            OptCfg::with([store_key("FooBar"), names(&["b", "bar"])]),
         ];
 
         let mut cmd =
@@ -2039,7 +2033,7 @@ mod tests_of_parse_with {
 
     #[test]
     fn accept_all_options_if_store_key_is_asterisk() {
-        let opt_cfgs = vec![OptCfg::with(&[store_key("*")])];
+        let opt_cfgs = vec![OptCfg::with([store_key("*")])];
 
         let mut cmd = Cmd::with_strings([
             "app".to_string(),
@@ -2072,13 +2066,13 @@ mod tests_of_parse_with {
     #[test]
     fn accept_unconfigured_option_even_if_it_matches_store_key() {
         let opt_cfgs = vec![
-            OptCfg::with(&[
+            OptCfg::with([
                 store_key("Bar"),
                 names(&["foo", "f"]),
                 has_arg(true),
                 is_array(true),
             ]),
-            OptCfg::with(&[store_key("*")]),
+            OptCfg::with([store_key("*")]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -2128,9 +2122,9 @@ mod tests_of_parse_util_sub_cmd_with {
 
     #[test]
     fn get_sub_cmd() {
-        let opt_cfgs1 = vec![OptCfg::with(&[names(&["foo", "f"])])];
+        let opt_cfgs1 = vec![OptCfg::with([names(&["foo", "f"])])];
 
-        let opt_cfgs2 = vec![OptCfg::with(&[names(&["bar", "b"])])];
+        let opt_cfgs2 = vec![OptCfg::with([names(&["bar", "b"])])];
 
         let mut cmd = Cmd::with_strings([
             "app".to_string(),
@@ -2188,7 +2182,7 @@ mod tests_of_parse_util_sub_cmd_with {
 
     #[test]
     fn no_sub_cmd() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo", "f"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo", "f"])])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "--foo".to_string()]);
 
@@ -2216,7 +2210,7 @@ mod tests_of_parse_util_sub_cmd_with {
 
     #[test]
     fn fail_to_parse() {
-        let opt_cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let opt_cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "--bar-foo".to_string()]);
 
