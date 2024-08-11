@@ -10,7 +10,7 @@ This library provides the following functionalities:
     - This library supports not `-ofoo` but `-o=foo` as an alternative to `-o foo` for short option.
 - Supports parsing with option configurations.
 - Supports parsing with option configurations made from struct fields and attributes, and setting the option values to them.
-- Is able to parse command line arguments including sub commands. *(To be added)*
+- Supports parsing command line arguments including sub commands.
 - Generates help text from option configurations.
 
 ## Install
@@ -32,7 +32,7 @@ The usage of this `Cmd` struct is as follows:
 The `Cmd::new` function  creates a `Cmd` instance with original command line arguments.
 This function uses `std::env::args_os` and `OsString#into_string` to read command line arguments in order to avoid `panic!` call that the user cannot control.
 
-```
+```rust
 use cliargs::Cmd;
 use cliargs::errors::InvalidOsArg;
 
@@ -48,7 +48,7 @@ let cmd = match Cmd::new() {
 
 The `Cmd::with_strings` function creates a `Cmd` instance with the specified `String` array.
 
-```
+```rust
 use cliargs::Cmd;
 use std::env;
 
@@ -59,7 +59,7 @@ let cmd = Cmd::with_strings(env::args());
 
 The `Cmd::with_os_strings` function creates a `Cmd` instance with the specified `OsString` array.
 
-```
+```rust
 use cliargs::Cmd;
 use cliargs::errors::InvalidOsArg;
 use std::env;
@@ -82,7 +82,7 @@ If you want to specify a value to an option, follows `"="` and the value after t
 
 All command line arguments after `--` are command arguments, even they starts with `-` or `--`.
 
-```
+```rust
 use cliargs::Cmd;
 use cliargs::errors::InvalidOption;
 
@@ -108,7 +108,7 @@ If this field is not specified, the first element of `names` field is used inste
 
 `names` field is a string array and specified the option names, that are both long options and short options.
 The order of elements in this field is used in a help text.
-If you want to prioritize the output of short option name first in the help text, like `-f, --foo-bar`, but use the long option name as the key in the option map, write `store_key` and `names` fields as follows: `OptCfg::with(&[store_key("foo-bar"), names(&["f", "foo-bar"])])`.
+If you want to prioritize the output of short option name first in the help text, like `-f, --foo-bar`, but use the long option name as the key in the option map, write `store_key` and `names` fields as follows: `OptCfg::with([store_key("foo-bar"), names(&["f", "foo-bar"])])`.
 
 `has_arg` field indicates the option requires one or more values.
 `is_array` field indicates the option can have multiple values.
@@ -125,7 +125,7 @@ If you want to access the option configurations after parsing, get them from thi
 
 In addition,the help printing for an array of `OptCfg` is generated with `Help`.
 
-```
+```rust
 use cliargs::{Cmd, OptCfg};
 use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
 use cliargs::validators::validate_number;
@@ -133,11 +133,11 @@ use cliargs::errors::InvalidOption;
 
 let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
 let opt_cfgs = vec![
-    OptCfg::with(&[
+    OptCfg::with([
         names(&["foo-bar"]),
         desc("This is description of foo-bar."),
     ]),
-    OptCfg::with(&[
+    OptCfg::with([
         names(&["baz", "z"]),
         has_arg(true),
         defaults(&["1"]),
@@ -211,7 +211,7 @@ string.
 If you want to specify an array which contains only one emtpy string, write nothing after
 `=` symbol, like `#[opt(cfg="=")]`.
 
-```
+```rust
 use cliargs::Cmd;
 use cliargs::errors::InvalidOption;
 
@@ -249,11 +249,41 @@ help.print();
 //   -z, --baz <s>  This is description of baz.
 ```
 
+### Supports parsing command line arguments including sub commands
+
+This crate provides methods `Cmd#parse_until_sub_cmd`, `Cmd#parse_until_sub_cmd_with`, and `Cmd#parse_until_sub_cmd_for` for parsing command line arguments including sub commands.
+
+These methods correspond to `Cmd#parse`, `Cmd#parse_with`, and `Cmd#parse_for`, respectively, and behave the same except that they stop parsing before the first command argument (= sub command) and return a `Cmd` instance containing the arguments starting from the the sub command.
+
+The folowing is an example code using `Cmd#parse_until_sub_cmd`:
+
+```rust
+use cliargs::Cmd;
+use cliargs::errors::InvalidOption;
+
+let mut cmd = Cmd::with_strings([ /* ... */ ]);
+
+match cmd.parse_until_sub_cmd() {
+    Ok(Some(mut sub_cmd)) => {
+        let sub_cmd_name = sub_cmd.name();
+        match sub_cmd.parse() {
+            Ok(_) => { /* ... */ },
+            Err(err) => panic!("Invalid option: {}", err.option()),
+        }
+    },
+    Ok(None) => { /* ... */ },
+    Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+        panic!("Option contains invalid character: {option}");
+    },
+    Err(err) => panic!("Invalid option: {}", err.option()),
+}
+```
+
 ## Supporting Rust versions
 
 This crate supports Rust 1.74.1 or later.
 
-```
+```sh
 % cargo msrv --no-check-feedback
 Fetching index
 Determining the Minimum Supported Rust Version (MSRV) for toolchain x86_64-apple-darwin
