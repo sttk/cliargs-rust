@@ -203,7 +203,7 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_has_only_one_long_name() {
-        let cfg = OptCfg::with(&[names(&["foo-bar"])]);
+        let cfg = OptCfg::with([names(&["foo-bar"])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 0);
         assert_eq!(title, "--foo-bar");
@@ -211,7 +211,7 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_has_only_one_short_name() {
-        let cfg = OptCfg::with(&[names(&["f"])]);
+        let cfg = OptCfg::with([names(&["f"])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 0);
         assert_eq!(title, "-f");
@@ -219,7 +219,7 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_has_multiple_names() {
-        let cfg = OptCfg::with(&[names(&["f", "b", "foo-bar"])]);
+        let cfg = OptCfg::with([names(&["f", "b", "foo-bar"])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 0);
         assert_eq!(title, "-f, -b, --foo-bar");
@@ -227,7 +227,7 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_has_no_name_but_store_key() {
-        let cfg = OptCfg::with(&[store_key("Foo_Bar")]);
+        let cfg = OptCfg::with([store_key("Foo_Bar")]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 0);
         assert_eq!(title, "--Foo_Bar");
@@ -235,12 +235,12 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_names_contain_emtpy_name() {
-        let cfg = OptCfg::with(&[names(&["", "f"])]);
+        let cfg = OptCfg::with([names(&["", "f"])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 4);
         assert_eq!(title, "-f");
 
-        let cfg = OptCfg::with(&[names(&["", "f", "", "b", ""])]);
+        let cfg = OptCfg::with([names(&["", "f", "", "b", ""])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 4);
         assert_eq!(title, "-f,     -b");
@@ -248,7 +248,7 @@ mod tests_of_make_opt_title {
 
     #[test]
     fn test_when_cfg_names_are_all_empty_and_has_store_key() {
-        let cfg = OptCfg::with(&[store_key("FooBar"), names(&["", ""])]);
+        let cfg = OptCfg::with([store_key("FooBar"), names(&["", ""])]);
         let (indent, title) = make_opt_title(&cfg);
         assert_eq!(indent, 8);
         assert_eq!(title, "--FooBar");
@@ -262,7 +262,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_long_name() {
-        let cfgs = vec![OptCfg::with(&[names(&["foo-bar"])])];
+        let cfgs = vec![OptCfg::with([names(&["foo-bar"])])];
 
         let mut indent = 0;
         let vec = create_opts_help(&cfgs, &mut indent);
@@ -276,7 +276,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_long_name_and_desc() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["foo-bar"]),
             desc("The description of foo-bar."),
         ])];
@@ -293,7 +293,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_long_name_and_desc_and_arg_in_help() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["foo-bar"]),
             desc("The description of foo-bar."),
             arg_in_help("<num>"),
@@ -311,7 +311,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_short_name() {
-        let cfgs = vec![OptCfg::with(&[names(&["f"])])];
+        let cfgs = vec![OptCfg::with([names(&["f"])])];
 
         let mut indent = 0;
         let vec = create_opts_help(&cfgs, &mut indent);
@@ -325,10 +325,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_short_name_and_desc() {
-        let cfgs = vec![OptCfg::with(&[
-            names(&["f"]),
-            desc("The description of f."),
-        ])];
+        let cfgs = vec![OptCfg::with([names(&["f"]), desc("The description of f.")])];
 
         let mut indent = 0;
         let vec = create_opts_help(&cfgs, &mut indent);
@@ -342,7 +339,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_cfg_has_only_one_short_name_and_desc_and_arg_in_help() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["f"]),
             desc("The description of f."),
             arg_in_help("<n>"),
@@ -360,7 +357,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_indent_is_positive_and_longer_than_title() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["foo-bar"]),
             desc("The description of foo-bar."),
             arg_in_help("<num>"),
@@ -378,7 +375,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_indent_is_positive_and_shorter_than_title() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["foo-bar"]),
             desc("The description of foo-bar."),
             arg_in_help("<num>"),
@@ -411,7 +408,7 @@ mod tests_of_create_opts_help {
 
     #[test]
     fn test_when_names_contains_empty_strings() {
-        let cfgs = vec![OptCfg::with(&[
+        let cfgs = vec![OptCfg::with([
             names(&["", "", "f", "", "foo-bar", ""]),
             desc("The description of foo-bar."),
             arg_in_help("<num>"),

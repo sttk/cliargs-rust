@@ -131,7 +131,7 @@
 //! If you want to prioritize the output of short option name first in the help
 //! text, like `-f, --foo-bar`, but use the long option name as the key in the
 //! option map, write `store_key` and `names` fields as follows:
-//! `OptCfg::with(&[store_key("foo-bar"), names(&["f", "foo-bar"])])`.
+//! `OptCfg::with([store_key("foo-bar"), names(&["f", "foo-bar"])])`.
 //!
 //! `has_arg` field indicates the option requires one or more values.
 //! `is_array` field indicates the option can have multiple values.
@@ -167,7 +167,7 @@
 //!         arg_in_help: "<num>".to_string(),
 //!         validator: validate_number::<u64>,
 //!     },
-//!     OptCfg::with(&[
+//!     OptCfg::with([
 //!         names(&["baz", "z"]),
 //!         has_arg(true),
 //!         defaults(&["1"]),
@@ -900,8 +900,8 @@ mod tests_of_cmd {
             }
 
             let cfgs = vec![
-                OptCfg::with(&[names(&["foo"])]),
-                OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                OptCfg::with([names(&["foo"])]),
+                OptCfg::with([names(&["bar"]), has_arg(true), is_array(true)]),
             ];
 
             let mut cmd = Cmd::with_strings([
@@ -923,8 +923,8 @@ mod tests_of_cmd {
         fn should_move_by_returning() {
             fn move_cmd() -> Cmd<'static> {
                 let cfgs = vec![
-                    OptCfg::with(&[names(&["foo"])]),
-                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                    OptCfg::with([names(&["foo"])]),
+                    OptCfg::with([names(&["bar"]), has_arg(true), is_array(true)]),
                 ];
 
                 let mut cmd = Cmd::with_strings([
@@ -982,8 +982,8 @@ mod tests_of_cmd {
         fn should_move_by_mem_replace() {
             fn move_cmd() -> Cmd<'static> {
                 let cfgs = vec![
-                    OptCfg::with(&[names(&["foo"])]),
-                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                    OptCfg::with([names(&["foo"])]),
+                    OptCfg::with([names(&["bar"]), has_arg(true), is_array(true)]),
                 ];
 
                 let mut cmd = Cmd::with_strings([
@@ -1044,8 +1044,8 @@ mod tests_of_cmd {
         fn should_move_by_mem_swap() {
             fn move_cmd() -> Cmd<'static> {
                 let cfgs = vec![
-                    OptCfg::with(&[names(&["foo"])]),
-                    OptCfg::with(&[names(&["bar"]), has_arg(true), is_array(true)]),
+                    OptCfg::with([names(&["foo"])]),
+                    OptCfg::with([names(&["bar"]), has_arg(true), is_array(true)]),
                 ];
 
                 let mut cmd = Cmd::with_strings([

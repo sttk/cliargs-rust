@@ -6,10 +6,12 @@ mod tests_of_parse_with {
 
     #[test]
     fn it_should_parse_command_line_arguments_with_option_configurations() {
+        let params1 = vec![store_key("fooBar"), names(&["foo-bar", "f"])];
+
         let opt_cfgs = vec![
-            OptCfg::with(&[store_key("fooBar"), names(&["foo-bar", "f"])]),
-            OptCfg::with(&[names(&["baz", "b"]), has_arg(true)]),
-            OptCfg::with(&[
+            OptCfg::with(params1),
+            OptCfg::with([names(&["baz", "b"]), has_arg(true)]),
+            OptCfg::with([
                 names(&["qux", "q"]),
                 has_arg(true),
                 is_array(true),
@@ -85,17 +87,17 @@ mod tests_of_parse_until_sub_cmd_with {
     #[test]
     fn it_should_parse_command_line_arguments_containing_subcommand() {
         let opt_cfgs1 = vec![
-            OptCfg::with(&[
+            OptCfg::with([
                 store_key("fooBar"),
                 names(&["foo-bar", "f"]),
                 has_arg(true),
                 validator(validate_number::<u32>),
             ]),
-            OptCfg::with(&[names(&["v"])]),
+            OptCfg::with([names(&["v"])]),
         ];
         let opt_cfgs2 = vec![
-            OptCfg::with(&[names(&["q"]), has_arg(true)]),
-            OptCfg::with(&[names(&["qux"])]),
+            OptCfg::with([names(&["q"]), has_arg(true)]),
+            OptCfg::with([names(&["qux"])]),
         ];
 
         let mut cmd = Cmd::with_strings([
@@ -151,9 +153,9 @@ mod tests_of_errors {
     #[test]
     fn it_should_parse_but_fail_if_the_option_does_not_match_configuration() {
         let opt_cfgs = vec![
-            OptCfg::with(&[store_key("fooBar"), names(&["foo-bar", "f"])]),
-            OptCfg::with(&[names(&["baz", "b"]), has_arg(true)]),
-            OptCfg::with(&[
+            OptCfg::with([store_key("fooBar"), names(&["foo-bar", "f"])]),
+            OptCfg::with([names(&["baz", "b"]), has_arg(true)]),
+            OptCfg::with([
                 names(&["qux", "q"]),
                 has_arg(true),
                 is_array(true),
@@ -229,9 +231,9 @@ mod tests_of_errors {
     #[test]
     fn it_should_parse_but_fail_if_the_option_argument_is_invalid() {
         let opt_cfgs = vec![
-            OptCfg::with(&[store_key("fooBar"), names(&["foo-bar", "f"])]),
-            OptCfg::with(&[names(&["baz", "b"]), has_arg(true)]),
-            OptCfg::with(&[
+            OptCfg::with([store_key("fooBar"), names(&["foo-bar", "f"])]),
+            OptCfg::with([names(&["baz", "b"]), has_arg(true)]),
+            OptCfg::with([
                 names(&["qux", "q"]),
                 has_arg(true),
                 is_array(true),

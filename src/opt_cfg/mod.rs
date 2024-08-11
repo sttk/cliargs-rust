@@ -65,70 +65,55 @@ impl OptCfg {
     ///   use cliargs::OptCfg;
     ///   use cliargs::OptCfgParam::{names, has_arg, desc};
     ///
-    ///   let cfg = OptCfg::with(&[
+    ///   let cfg = OptCfg::with([
     ///       names(&["foo-bar", "f"]),
     ///       has_arg(true),
     ///       desc("this is foo-bar option."),
     ///   ]);
     /// ```
-    pub fn with(params: &[OptCfgParam]) -> OptCfg {
+    pub fn with<'a>(params: impl IntoIterator<Item = OptCfgParam<'a>>) -> OptCfg {
         let empty_string = String::from("");
         let empty_vec = Vec::with_capacity(0);
 
-        let mut init = OptCfgInit {
-            store_key: &empty_string,
-            names: &empty_vec,
-            has_arg: false,
-            is_array: false,
-            defaults: None,
-            desc: &empty_string,
-            arg_in_help: &empty_string,
-            validator: |_, _, _| Ok(()),
-        };
+        let mut _store_key: &str = &empty_string;
+        let mut _names: &[&str] = &empty_vec;
+        let mut _has_arg = false;
+        let mut _is_array = false;
+        let mut _defaults = None;
+        let mut _desc: &str = &empty_string;
+        let mut _arg_in_help: &str = &empty_string;
+        let mut _validator: fn(
+            store_key: &str,
+            name: &str,
+            arg: &str,
+        ) -> Result<(), InvalidOption> = |_, _, _| Ok(());
 
-        for param in params.iter() {
-            init.edit(param);
+        for param in params.into_iter() {
+            match param {
+                OptCfgParam::store_key(s) => _store_key = s,
+                OptCfgParam::names(v) => _names = v,
+                OptCfgParam::has_arg(b) => _has_arg = b,
+                OptCfgParam::is_array(b) => _is_array = b,
+                OptCfgParam::defaults(v) => _defaults = Some(v),
+                OptCfgParam::desc(s) => _desc = s,
+                OptCfgParam::arg_in_help(s) => _arg_in_help = s,
+                OptCfgParam::validator(f) => _validator = f,
+            }
         }
 
         OptCfg {
-            store_key: init.store_key.to_string(),
-            names: init.names.iter().map(|s| s.to_string()).collect(),
-            has_arg: init.has_arg,
-            is_array: init.is_array,
-            defaults: if let Some(sl) = init.defaults {
+            store_key: _store_key.to_string(),
+            names: _names.iter().map(|s| s.to_string()).collect(),
+            has_arg: _has_arg,
+            is_array: _is_array,
+            defaults: if let Some(sl) = _defaults {
                 Some(sl.iter().map(|s| s.to_string()).collect())
             } else {
                 None
             },
-            desc: init.desc.to_string(),
-            arg_in_help: init.arg_in_help.to_string(),
-            validator: init.validator,
-        }
-    }
-}
-
-struct OptCfgInit<'a> {
-    store_key: &'a str,
-    names: &'a [&'a str],
-    has_arg: bool,
-    is_array: bool,
-    defaults: Option<&'a [&'a str]>,
-    desc: &'a str,
-    arg_in_help: &'a str,
-    validator: fn(store_key: &str, name: &str, arg: &str) -> Result<(), InvalidOption>,
-}
-
-impl<'a> OptCfgInit<'a> {
-    fn edit(&mut self, param: &'a OptCfgParam) {
-        match param {
-            OptCfgParam::store_key(s) => self.store_key = s,
-            OptCfgParam::names(v) => self.names = v,
-            OptCfgParam::has_arg(b) => self.has_arg = *b,
-            OptCfgParam::is_array(b) => self.is_array = *b,
-            OptCfgParam::defaults(v) => self.defaults = Some(v),
-            OptCfgParam::desc(s) => self.desc = s,
-            OptCfgParam::arg_in_help(s) => self.arg_in_help = s,
-            OptCfgParam::validator(f) => self.validator = *f,
+            desc: _desc.to_string(),
+            arg_in_help: _arg_in_help.to_string(),
+            validator: _validator,
         }
     }
 }
@@ -170,7 +155,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_store_key() {
-            let cfg = OptCfg::with(&[OptCfgParam::store_key("fooBar")]);
+            let cfg = OptCfg::with([OptCfgParam::store_key("fooBar")]);
 
             assert_eq!(cfg.store_key, "fooBar");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -185,7 +170,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_names() {
-            let cfg = OptCfg::with(&[OptCfgParam::names(&["foo-bar", "f"])]);
+            let cfg = OptCfg::with([OptCfgParam::names(&["foo-bar", "f"])]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, vec!["foo-bar".to_string(), "f".to_string()]);
@@ -200,7 +185,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_has_arg() {
-            let cfg = OptCfg::with(&[OptCfgParam::has_arg(true)]);
+            let cfg = OptCfg::with([OptCfgParam::has_arg(true)]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -215,7 +200,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_is_array() {
-            let cfg = OptCfg::with(&[OptCfgParam::is_array(true)]);
+            let cfg = OptCfg::with([OptCfgParam::is_array(true)]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -230,7 +215,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_defaults() {
-            let cfg = OptCfg::with(&[OptCfgParam::defaults(&["123", "456"])]);
+            let cfg = OptCfg::with([OptCfgParam::defaults(&["123", "456"])]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -248,7 +233,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_desc() {
-            let cfg = OptCfg::with(&[OptCfgParam::desc("description")]);
+            let cfg = OptCfg::with([OptCfgParam::desc("description")]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -263,7 +248,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_arg_in_help() {
-            let cfg = OptCfg::with(&[OptCfgParam::arg_in_help("<num>")]);
+            let cfg = OptCfg::with([OptCfgParam::arg_in_help("<num>")]);
 
             assert_eq!(cfg.store_key, "");
             assert_eq!(cfg.names, Vec::<String>::new());
@@ -278,7 +263,7 @@ mod tests_of_opt_cfg {
 
         #[test]
         fn test_of_validator() {
-            let cfg = OptCfg::with(&[OptCfgParam::validator(|key, name, arg| {
+            let cfg = OptCfg::with([OptCfgParam::validator(|key, name, arg| {
                 Err(InvalidOption::OptionArgIsInvalid {
                     store_key: key.to_string(),
                     option: name.to_string(),

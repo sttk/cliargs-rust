@@ -817,7 +817,7 @@ mod tests_of_help {
         use crate::OptCfgParam::*;
 
         let mut help = Help::new();
-        help.add_opts(&[OptCfg::with(&[
+        help.add_opts(&[OptCfg::with([
             names(&["foo-bar"]),
             desc("This is a description of option."),
         ])]);
@@ -841,7 +841,7 @@ mod tests_of_help {
         let cols = linebreak::term_cols();
 
         let mut help = Help::new();
-        help.add_opts(&[OptCfg::with(&[
+        help.add_opts(&[OptCfg::with([
             names(&["foo-bar"]),
             desc(&("a".repeat(cols - 11) + " bcdef")),
         ])]);
@@ -869,7 +869,7 @@ mod tests_of_help {
 
         let mut help = Help::with_margins(4, 2);
 
-        help.add_opts(&[OptCfg::with(&[
+        help.add_opts(&[OptCfg::with([
             names(&["foo-bar"]),
             desc(&("a".repeat(cols - 11 - 4 - 2) + " " + &"b".repeat(cols - 11 - 4 - 2) + "ccc")),
         ])]);
@@ -904,7 +904,7 @@ mod tests_of_help {
         let mut help = Help::new();
 
         help.add_opts_with_margins(
-            &[OptCfg::with(&[
+            &[OptCfg::with([
                 names(&["foo-bar"]),
                 desc(
                     &("a".repeat(cols - 11 - 5 - 4) + " " + &"b".repeat(cols - 11 - 5 - 4) + "ccc"),
@@ -944,7 +944,7 @@ mod tests_of_help {
         let mut help = Help::with_margins(4, 2);
 
         help.add_opts_with_margins(
-            &[OptCfg::with(&[
+            &[OptCfg::with([
                 names(&["foo-bar"]),
                 desc(
                     &("a".repeat(cols - 11 - 5 - 4) + " " + &"b".repeat(cols - 11 - 5 - 4) + "ccc"),
@@ -983,7 +983,7 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts_with_indent(
-            &[OptCfg::with(&[
+            &[OptCfg::with([
                 names(&["foo-bar"]),
                 desc(&("a".repeat(cols - 12) + " " + &"b".repeat(cols - 12) + "ccc")),
             ])],
@@ -1016,7 +1016,7 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts_with_indent(
-            &[OptCfg::with(&[
+            &[OptCfg::with([
                 names(&["foo-bar"]),
                 desc(&("a".repeat(cols))),
             ])],
@@ -1046,13 +1046,13 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with(&[
+            OptCfg::with([
                 names(&["foo-bar", "f"]),
                 has_arg(true),
                 desc(&("a".repeat(cols - 22) + " " + &"b".repeat(cols - 22) + "ccc")),
                 arg_in_help("<text>"),
             ]),
-            OptCfg::with(&[
+            OptCfg::with([
                 names(&["baz", "b"]),
                 desc(&("d".repeat(cols - 22) + " " + &"e".repeat(cols - 22) + "fff")),
             ]),
@@ -1094,8 +1094,8 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with(&[names(&["foo-bar"]), desc("description")]),
-            OptCfg::with(&[names(&["*"]), desc("any option")]),
+            OptCfg::with([names(&["foo-bar"]), desc("description")]),
+            OptCfg::with([names(&["*"]), desc("any option")]),
         ]);
 
         let mut iter = help.iter();
@@ -1113,8 +1113,8 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with(&[store_key("foo"), desc("description")]),
-            OptCfg::with(&[store_key("*"), desc("any option")]),
+            OptCfg::with([store_key("foo"), desc("description")]),
+            OptCfg::with([store_key("*"), desc("any option")]),
         ]);
 
         let mut iter = help.iter();
@@ -1132,8 +1132,8 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with(&[names(&["foo-bar"]), desc("description")]),
-            OptCfg::with(&[names(&["*"]), desc("any option")]),
+            OptCfg::with([names(&["foo-bar"]), desc("description")]),
+            OptCfg::with([names(&["*"]), desc("any option")]),
         ]);
 
         let mut iter = help.iter();
@@ -1154,8 +1154,8 @@ mod tests_of_help {
         let mut help = Help::new();
         help.add_opts_with_indent(
             &[
-                OptCfg::with(&[names(&["foo-bar"]), desc("description")]),
-                OptCfg::with(&[names(&["baz"]), desc("description")]),
+                OptCfg::with([names(&["foo-bar"]), desc("description")]),
+                OptCfg::with([names(&["baz"]), desc("description")]),
             ],
             cols + 1,
         );
@@ -1178,8 +1178,8 @@ mod tests_of_help {
         let mut help = Help::new();
         help.add_opts_with_margins(
             &[
-                OptCfg::with(&[names(&["foo-bar"]), desc("description")]),
-                OptCfg::with(&[names(&["baz"]), desc("description")]),
+                OptCfg::with([names(&["foo-bar"]), desc("description")]),
+                OptCfg::with([names(&["baz"]), desc("description")]),
             ],
             cols - 1,
             1,
@@ -1200,8 +1200,8 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with(&[names(&["", "f", "foo-bar", "", ""]), desc("description")]),
-            OptCfg::with(&[names(&["b", "", "z", "baz"]), desc("description")]),
+            OptCfg::with([names(&["", "f", "foo-bar", "", ""]), desc("description")]),
+            OptCfg::with([names(&["b", "", "z", "baz"]), desc("description")]),
         ]);
 
         let mut iter = help.iter();
