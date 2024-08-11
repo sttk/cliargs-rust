@@ -14,6 +14,7 @@
 //! - Supports parsing with option configurations.
 //! - Supports parsing with option configurations made from struct fields and attributes, and
 //!   setting the option values to them.
+//! - Supports parsing command line arguments including sub commands.
 //! - Generates help text from option configurations.
 //!
 //! [posix]: https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html#Argument-Syntax
@@ -99,7 +100,7 @@
 //! use cliargs::Cmd;
 //! use cliargs::errors::InvalidOption;
 //!
-//! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+//! let mut cmd = Cmd::with_strings([ /* ... */ ]);
 //! match cmd.parse() {
 //!     Ok(_) => { /* ... */ },
 //!     Err(InvalidOption::OptionContainsInvalidChar { option }) => {
@@ -155,7 +156,7 @@
 //! use cliargs::errors::InvalidOption;
 //! use cliargs::Help;
 //!
-//! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+//! let mut cmd = Cmd::with_strings([ /* ... */ ]);
 //! let opt_cfgs = vec![
 //!     OptCfg {
 //!         store_key: "foo_bar".to_string(),
@@ -251,7 +252,7 @@
 //! }
 //! let mut my_options = MyOptions::with_defaults();
 //!
-//! let mut cmd = Cmd::with_strings(vec![ /* ... */ ]);
+//! let mut cmd = Cmd::with_strings([ /* ... */ ]);
 //! match cmd.parse_for(&mut my_options) {
 //!     Ok(_) => { /* ... */ },
 //!     Err(InvalidOption::OptionContainsInvalidChar { option }) => { /* ... */ },
@@ -274,6 +275,40 @@
 //! // This is the usage description.
 //! //   -f, --foo-bar  This is description of foo_bar.
 //! //   -z, --baz <s>  This is description of baz.
+//! ```
+//!
+//! ## Parse command line arguments including sub command
+//!
+//! This crate provides methods [Cmd::parse_until_sub_cmd], [Cmd::parse_until_sub_cmd_with], and
+//! [Cmd::parse_until_sub_cmd_for] for parsing command line arguments including sub commands.
+//!
+//! These methods correspond to [Cmd::parse], [Cmd::parse_with], and [Cmd::parse_for],
+//! respectively, and behave the same except that they stop parsing before the first command
+//! argument (= sub command) and
+//! return a [Cmd] instance containing the arguments starting from the the sub command.
+//!
+//! The folowing is an example code using [Cmd::parse_until_sub_cmd]:
+//!
+//! ```
+//! use cliargs::Cmd;
+//! use cliargs::errors::InvalidOption;
+//!
+//! let mut cmd = Cmd::with_strings([ /* ... */ ]);
+//!
+//! match cmd.parse_until_sub_cmd() {
+//!     Ok(Some(mut sub_cmd)) => {
+//!         let sub_cmd_name = sub_cmd.name();
+//!         match sub_cmd.parse() {
+//!             Ok(_) => { /* ... */ },
+//!             Err(err) => panic!("Invalid option: {}", err.option()),
+//!         }
+//!     },
+//!     Ok(None) => { /* ... */ },
+//!     Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+//!         panic!("Option contains invalid character: {option}");
+//!     },
+//!     Err(err) => panic!("Invalid option: {}", err.option()),
+//! }
 //! ```
 
 /// Enums for errors that can occur when parsing command line arguments.
