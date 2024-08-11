@@ -283,7 +283,7 @@ match cmd.parse_until_sub_cmd() {
 
 This crate supports Rust 1.74.1 or later.
 
-```
+```sh
 % cargo msrv --no-check-feedback
 Fetching index
 Determining the Minimum Supported Rust Version (MSRV) for toolchain x86_64-apple-darwin

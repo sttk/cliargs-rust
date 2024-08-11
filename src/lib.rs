@@ -149,7 +149,7 @@
 //!
 //! In addition,the help printing for an array of [OptCfg] is generated with [Help].
 //!
-//! ```
+//! ```rust
 //! use cliargs::{Cmd, OptCfg};
 //! use cliargs::OptCfgParam::{names, has_arg, defaults, validator, desc, arg_in_help};
 //! use cliargs::validators::validate_number;
@@ -238,7 +238,7 @@
 //! If you want to specify an array which contains only one emtpy string, write nothing after `=` symbol, like
 //! `#[opt(cfg="=")]`.
 //!
-//! ```
+//! ```rust
 //! use cliargs::Cmd;
 //! use cliargs::errors::InvalidOption;
 //! use cliargs::Help;
@@ -289,7 +289,7 @@
 //!
 //! The folowing is an example code using [Cmd::parse_until_sub_cmd]:
 //!
-//! ```
+//! ```rust
 //! use cliargs::Cmd;
 //! use cliargs::errors::InvalidOption;
 //!
