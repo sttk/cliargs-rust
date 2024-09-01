@@ -501,11 +501,25 @@ impl<'b, 'a> Cmd<'a> {
     }
 
     fn sub_cmd(&'a self, from_index: usize) -> Cmd<'b> {
-        Cmd::with_strings(
-            self._leaked_strs[from_index..(self._num_of_args)]
-                .into_iter()
-                .map(|s| s.to_string()),
-        )
+        let arg_iter = self._leaked_strs[from_index..(self._num_of_args)].into_iter();
+        let (size, _) = arg_iter.size_hint();
+        let mut _leaked_strs = Vec::with_capacity(size);
+
+        for arg in arg_iter {
+            let str: &'b str = arg.to_string().leak();
+            _leaked_strs.push(str);
+        }
+
+        let _num_of_args = _leaked_strs.len();
+
+        Cmd {
+            name: &_leaked_strs[0],
+            args: Vec::new(),
+            opts: HashMap::new(),
+            cfgs: Vec::new(),
+            _leaked_strs,
+            _num_of_args,
+        }
     }
 
     /// Returns the command name.
