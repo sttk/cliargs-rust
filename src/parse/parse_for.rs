@@ -48,8 +48,8 @@ impl<'b> Cmd<'_> {
     /// each option value to a curresponding field of the option store.
     ///
     /// Within this method, a vector of [OptCfg] is made from the fields of the option store.
-    /// This [OptCfg] vector is set to the public field `cfgs` of the [Cmd] instance.
-    /// If you want to access this option configurations, get them from this field.
+    /// This [OptCfg] vector is set into [Cmd] instance.
+    /// If you want to access this option configurations, get them by `opt_cfgs` method.
     ///
     /// An option configuration corresponding to each field of an option store is determined by
     /// its type and `opt` field attribute.
