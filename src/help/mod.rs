@@ -502,7 +502,7 @@ mod tests_of_help {
     }
 
     #[test]
-    fn new_and_add_text_with_indent() {
+    fn add_text_with_indent() {
         let term_cols = linebreak::term_cols();
         let mut text = "a".repeat(term_cols);
         text.push_str("12345\n");
@@ -528,6 +528,40 @@ mod tests_of_help {
 
         let line = iter.next();
         let expected = "        6789".to_string();
+        assert_eq!(line, Some(expected));
+
+        let line = iter.next();
+        assert_eq!(line, None);
+    }
+
+    #[test]
+    fn add_text_with_indent_and_margins() {
+        let term_cols = linebreak::term_cols();
+        let mut text = "a".repeat(term_cols - 1 - 2);
+        text.push_str("12345\n");
+        text.push_str(&"b".repeat(term_cols - 8 - 1 - 2));
+        text.push_str("6789");
+
+        let mut help = Help::new();
+        help.add_text_with_indent_and_margins(text, 8, 1, 2);
+        let mut iter = help.iter();
+
+        let line = iter.next();
+        let mut expected = "a".repeat(term_cols - 1 - 2);
+        expected.insert_str(0, " ");
+        assert_eq!(line, Some(expected));
+
+        let line = iter.next();
+        let expected = "         12345".to_string();
+        assert_eq!(line, Some(expected));
+
+        let line = iter.next();
+        let mut expected = "b".repeat(term_cols - 8 - 1 - 2);
+        expected.insert_str(0, "         ");
+        assert_eq!(line, Some(expected));
+
+        let line = iter.next();
+        let expected = "         6789".to_string();
         assert_eq!(line, Some(expected));
 
         let line = iter.next();
@@ -936,7 +970,7 @@ mod tests_of_help {
     }
 
     #[test]
-    fn add_opts_with_margins_both_of_new_method_and_add_text_with_margins_methods() {
+    fn add_opts_with_margins_both_of_new_method_and_add_text_with_margins() {
         use crate::OptCfgParam::*;
 
         let cols = linebreak::term_cols();
@@ -1033,6 +1067,38 @@ mod tests_of_help {
 
         let line = iter.next();
         assert_eq!(line, Some(" ".repeat(10) + &"a".repeat(10)));
+
+        let line = iter.next();
+        assert_eq!(line, None);
+    }
+
+    #[test]
+    fn add_opts_with_indent_and_margins() {
+        use crate::OptCfgParam::*;
+
+        let cols = linebreak::term_cols();
+
+        let mut help = Help::new();
+        help.add_opts_with_indent_and_margins(
+            &[OptCfg::with([
+                names(&["foo-bar"]),
+                desc(&("a".repeat(cols))),
+            ])],
+            6,
+            4,
+            2,
+        );
+
+        let mut iter = help.iter();
+
+        let line = iter.next();
+        assert_eq!(line, Some("    --foo-bar".to_string()));
+
+        let line = iter.next();
+        assert_eq!(line, Some(" ".repeat(10) + &"a".repeat(cols - 6 - 4 - 2)));
+
+        let line = iter.next();
+        assert_eq!(line, Some(" ".repeat(10) + &"a".repeat(6 + 4 + 2)));
 
         let line = iter.next();
         assert_eq!(line, None);
