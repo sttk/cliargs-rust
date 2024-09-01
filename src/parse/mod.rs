@@ -38,14 +38,16 @@ where
         } else if !prev_opt_taking_args.is_empty() {
             match collect_opts(prev_opt_taking_args, Some(arg)) {
                 Err(err) => {
+                    prev_opt_taking_args = "";
                     if first_err.is_none() {
                         first_err = Some(err);
                     }
                     continue 'L0;
                 }
-                Ok(_) => {}
+                Ok(_) => {
+                    prev_opt_taking_args = "";
+                }
             }
-            prev_opt_taking_args = "";
         } else if arg.starts_with("--") {
             if arg.len() == 2 {
                 is_non_opt = true;
