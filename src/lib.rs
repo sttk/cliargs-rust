@@ -545,8 +545,8 @@ impl<'b, 'a> Cmd<'a> {
     /// Returns the option argument with the specified name.
     ///
     /// If the option has multiple arguments, this method returns the first argument.
-    /// If the option a boolean flag, this method returns [None].
-    /// If the option is not specified in the command line argument, the return value
+    /// If the option is a boolean flag, this method returns [None].
+    /// If the option is not specified in the command line arguments, the return value
     /// of this method is [None].
     pub fn opt_arg(&'a self, name: &str) -> Option<&'a str> {
         if let Some(opt_vec) = self.opts.get(name) {
@@ -560,8 +560,8 @@ impl<'b, 'a> Cmd<'a> {
     /// Returns the option arguments with the specified name.
     ///
     /// If the option has one or multiple arguments, this method returns an array of the arguments.
-    /// If the option a boolean flag, this method returns an empty vector.
-    /// If the option is not specified in the command line argument, the return value
+    /// If the option is a boolean flag, this method returns an empty vector.
+    /// If the option is not specified in the command line arguments, the return value
     /// of this method is [None].
     pub fn opt_args(&'a self, name: &str) -> Option<&'a [&'a str]> {
         match self.opts.get(name) {
