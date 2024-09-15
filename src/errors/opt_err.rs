@@ -90,7 +90,7 @@ pub enum InvalidOption {
         /// The store key of the option configuration that caused this error.
         store_key: String,
 
-        /// The option name that caused this error.
+        /// The duplicated name of the option configuration.
         name: String,
     },
 

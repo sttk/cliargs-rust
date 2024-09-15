@@ -21,9 +21,21 @@ impl<'b, 'a> Cmd<'a> {
     /// An option configuration has fields: `store_key`, `names`, `has_arg`, `is_array`,
     /// `defaults`, `desc`, `arg_in_help`, and `validator`.
     ///
+    /// When an option matches one of the `names` in the option configurations, the option is
+    /// registered into [Cmd] with `store_key`.
+    /// If both `has_arg` and `is_array` is false, the optioin can have only one option argument,
+    /// otherwise the option cannot have option arguments.
+    /// If `defaults` field is specified and no option value is given in command line arguments,
+    /// the value of `defaults` is set as the option arguments.
+    ///
+    /// If options not declared in option configurations are given in command line arguments, this
+    /// method basicaly returns [UnconfiguredOption] error.
+    /// However, if you want to allow other ooptions, add an option configuration of which
+    /// `store_key` or the first element of `names` is "*".
+    ///
     /// The ownership of the vector of option configurations which is passed as an argument of
-    /// this method is moved to this method and set to the public field `cfgs` of [Cmd] instance.
-    /// If you want to access the option configurations after parsing, get them from this field.
+    /// this method is moved to this method and set into this [Cmd] instance.
+    /// It can be retrieved with its method: [Cmd::opt_cfgs].
     ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};
@@ -73,6 +85,10 @@ impl<'b, 'a> Cmd<'a> {
     ///
     /// This method parses command line arguments in the same way as the [Cmd::parse_with] method,
     /// except that it only parses the command line arguments before the first command argument.
+    ///
+    /// The ownership of the vector of option configurations which is passed as an argument of
+    /// this method is moved to this method and set into this [Cmd] instance.
+    /// It can be retrieved with its method: [Cmd::opt_cfgs].
     ///
     /// ```
     /// use cliargs::{Cmd, OptCfg};
