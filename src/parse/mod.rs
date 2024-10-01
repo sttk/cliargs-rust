@@ -6,6 +6,7 @@ mod parse;
 mod parse_with;
 
 mod parse_for;
+pub use parse_for::make_opt_cfgs_for;
 pub use parse_for::OptStore;
 
 use crate::errors::InvalidOption;

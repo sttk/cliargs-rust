@@ -326,6 +326,7 @@ pub use help::HelpIter;
 pub use opt_cfg::validators;
 
 mod parse;
+pub use parse::make_opt_cfgs_for;
 pub use parse::OptStore;
 
 extern crate cliargs_derive;
