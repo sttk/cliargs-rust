@@ -801,26 +801,27 @@ mod tests_of_parse_until_sub_cmd {
     }
 
     #[test]
-    fn test_if_sub_command_is_like_path() { // for the fix of issue #39
+    fn test_if_sub_command_is_like_path() {
+        // for the fix of issue #39
         let ui_args = vec![
             "/path/to/app".to_string(),
             "--foo-bar".to_string(),
             "path/to/bar".to_string(),
             "--baz".to_string(),
-            "qux".to_string()
+            "qux".to_string(),
         ];
         let mut cmd = Cmd::with_strings(ui_args);
 
         if let Some(mut sub_cmd) = cmd.parse_until_sub_cmd().unwrap() {
-          sub_cmd.parse().unwrap();
+            sub_cmd.parse().unwrap();
 
-          assert_eq!(cmd.name(), "app");
-          assert_eq!(cmd.args(), &[] as &[&str]);
-          assert_eq!(cmd.has_opt("foo-bar"), true);
+            assert_eq!(cmd.name(), "app");
+            assert_eq!(cmd.args(), &[] as &[&str]);
+            assert_eq!(cmd.has_opt("foo-bar"), true);
 
-          assert_eq!(sub_cmd.name(), "path/to/bar");
-          assert_eq!(sub_cmd.args(), &["qux"]);
-          assert_eq!(sub_cmd.has_opt("baz"), true);
+            assert_eq!(sub_cmd.name(), "path/to/bar");
+            assert_eq!(sub_cmd.args(), &["qux"]);
+            assert_eq!(sub_cmd.has_opt("baz"), true);
         }
     }
 }

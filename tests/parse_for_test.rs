@@ -9,11 +9,11 @@ mod tests_of_parse_for {
     }
 
     #[test]
-    fn make_cfgs_for_my_options() {
+    fn make_opt_cfgs_for_my_options() {
         let mut my_options = MyOptions::with_defaults();
         assert_eq!(my_options.foo_bar, false);
 
-        let cfgs = cliargs::OptCfg::make_cfgs_for(&mut my_options);
+        let cfgs = cliargs::make_opt_cfgs_for(&mut my_options);
         assert_eq!(cfgs.len(), 1);
 
         let cfg = &cfgs[0];

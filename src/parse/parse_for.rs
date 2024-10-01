@@ -19,25 +19,23 @@ pub trait OptStore {
     fn set_field_values(&mut self, m: &HashMap<&str, Vec<&str>>) -> Result<(), InvalidOption>;
 }
 
-impl OptCfg {
-    /// Makes a vector of [OptCfg] struct instances from the field definitions and `opt` field
-    /// attributes of the struct instnace of which type is `T`.
-    ///
-    /// One [OptCfg] struct instance is made for each field.
-    /// The field name is set to `store_key`.
-    /// If the field's data type is `bool`, `has_arg` is set to `false`, otherwise, it is set to
-    /// `true`.
-    /// If the field is a vector type, `is_array` is set to `true`; otherwise, it is set to
-    /// `false`.
-    ///
-    /// Additionally, `names`, `defaults`, `desc`, and `arg_in_help` are set with extracted from
-    /// the `opt` attribute attached to the field.
-    ///
-    /// For `validator`, if the field's data type is numeric, it is set to the `validate_number`
-    /// function pointer corresponding to the data type.
-    pub fn make_cfgs_for<T: OptStore>(opt_store: &mut T) -> Vec<OptCfg> {
-        opt_store.make_opt_cfgs()
-    }
+/// Makes a vector of [OptCfg] struct instances from the field definitions and `opt` field
+/// attributes of the struct instnace of which type is `T`.
+///
+/// One [OptCfg] struct instance is made for each field.
+/// The field name is set to `store_key`.
+/// If the field's data type is `bool`, `has_arg` is set to `false`, otherwise, it is set to
+/// `true`.
+/// If the field is a vector type, `is_array` is set to `true`; otherwise, it is set to
+/// `false`.
+///
+/// Additionally, `names`, `defaults`, `desc`, and `arg_in_help` are set with extracted from
+/// the `opt` attribute attached to the field.
+///
+/// For `validator`, if the field's data type is numeric, it is set to the `validate_number`
+/// function pointer corresponding to the data type.
+pub fn make_opt_cfgs_for<T: OptStore>(opt_store: &mut T) -> Vec<OptCfg> {
+    opt_store.make_opt_cfgs()
 }
 
 impl<'b> Cmd<'_> {
@@ -180,7 +178,7 @@ impl<'b> Cmd<'_> {
 }
 
 #[cfg(test)]
-mod tests_of_make_cfgs_for {
+mod tests_of_make_opt_cfgs_for {
     use super::*;
     use crate as cliargs;
     extern crate cliargs_derive;
@@ -304,7 +302,7 @@ mod tests_of_make_cfgs_for {
         #[test]
         fn test_make_opt_cfgs_for_opt_store() {
             let mut store = NoAttrOptions::with_defaults();
-            let cfgs = cliargs::OptCfg::make_cfgs_for(&mut store);
+            let cfgs = cliargs::make_opt_cfgs_for(&mut store);
             assert_eq!(cfgs.len(), 40);
 
             let cfg = &cfgs[0];
@@ -1084,7 +1082,7 @@ mod tests_of_make_cfgs_for {
         #[test]
         fn test_make_opt_cfgs_for_store() {
             let mut store = WithAttrOptions::with_defaults();
-            let cfgs = cliargs::OptCfg::make_cfgs_for(&mut store);
+            let cfgs = cliargs::make_opt_cfgs_for(&mut store);
             assert_eq!(cfgs.len(), 40);
 
             let cfg = &cfgs[0];
@@ -1501,7 +1499,7 @@ mod tests_of_make_cfgs_for {
                 empty_str: Vec<String>,
             }
             let mut store = MyOptions::with_defaults();
-            let cfgs = cliargs::OptCfg::make_cfgs_for(&mut store);
+            let cfgs = cliargs::make_opt_cfgs_for(&mut store);
             assert_eq!(cfgs.len(), 4);
             assert_eq!(cfgs[0].store_key, "empty".to_string());
             assert_eq!(cfgs[0].defaults, Some(Vec::<String>::new()));
