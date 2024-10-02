@@ -447,7 +447,7 @@ mod tests_of_parse_with {
     }
 
     #[test]
-    fn zero_cfg_and_on_short_opt() {
+    fn zero_cfg_and_one_short_opt() {
         let opt_cfgs = vec![];
 
         let mut cmd = Cmd::with_strings(["path/to/app".to_string(), "-f".to_string()]);
@@ -851,7 +851,7 @@ mod tests_of_parse_with {
     }
 
     #[test]
-    fn one_cfg_requires_arg_but_one_short_oopt_has_no_arg() {
+    fn one_cfg_requires_arg_but_one_short_opt_has_no_arg() {
         let opt_cfgs = vec![OptCfg::with([names(&["f"]), has_arg(true)])];
 
         let mut cmd = Cmd::with_strings(["app".to_string(), "-f".to_string()]);
