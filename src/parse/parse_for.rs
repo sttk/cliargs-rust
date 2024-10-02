@@ -39,14 +39,14 @@ pub fn make_opt_cfgs_for<T: OptStore>(opt_store: &mut T) -> Vec<OptCfg> {
 }
 
 impl<'b> Cmd<'_> {
-    /// Parses command line arguments and set their option values to the option store which is
-    /// passed as an argument.
+    /// Parses command line arguments and set their option values to the fields of the option store
+    /// which is passed as the argument of this method.
     ///
     /// This method divides command line arguments to command arguments and options, then sets
-    /// each option value to a curresponding field of the option store.
+    /// each option value to a corresponding field of the option store.
     ///
     /// Within this method, a vector of [OptCfg] is made from the fields of the option store.
-    /// This [OptCfg] vector is set into [Cmd] instance.
+    /// This [OptCfg] vector is set into this [Cmd] instance.
     /// If you want to access this option configurations, get them by `opt_cfgs` method.
     ///
     /// An option configuration corresponding to each field of an option store is determined by
@@ -68,8 +68,8 @@ impl<'b> Cmd<'_> {
     /// If you want to specify multiple option names, separate them with commas.
     /// If you want to specify multiple default values, separate them with commas and round them
     /// with square brackets, like `[1,2,3]`.
-    /// If you want to use your favorite carachter as a separator, you can use it by putting it on
-    /// the left side of the open square bracket, like `/[1/2/3]`.
+    /// If you want to use your favorite character as a separator, you can use it by putting it
+    /// on the left side of the open square bracket, like `/[1/2/3]`.
     ///
     /// NOTE: A default value of empty string array option in a field attribute is `[]`, like
     /// `#[opt(cfg="=[]")]`, but it doesn't represent an array which contains only one empty
@@ -114,7 +114,7 @@ impl<'b> Cmd<'_> {
         opt_store.set_field_values(&self.opts)
     }
 
-    /// Parse command line arguments until the first command argument and set their option values
+    /// Parses command line arguments until the first command argument and set their option values
     /// to the option store which is passed as an argument.
     ///
     /// This method creates and returns a new [Cmd] instance that holds the command line arguments

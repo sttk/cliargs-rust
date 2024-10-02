@@ -800,9 +800,8 @@ mod tests_of_parse_until_sub_cmd {
         assert_eq!(cmd.opt_arg("f#o"), None);
     }
 
-    #[test]
+    #[test] // for the fix of issue #39
     fn test_if_sub_command_is_like_path() {
-        // for the fix of issue #39
         let ui_args = vec![
             "/path/to/app".to_string(),
             "--foo-bar".to_string(),
