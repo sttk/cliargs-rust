@@ -29,8 +29,8 @@ impl<'b, 'a> Cmd<'a> {
     /// the value of `defaults` is set as the option arguments.
     ///
     /// If options not declared in option configurations are given in command line arguments, this
-    /// method basicaly returns [UnconfiguredOption] error.
-    /// However, if you want to allow other ooptions, add an option configuration of which
+    /// method basicaly returns [InvalidOption::UnconfiguredOption] error.
+    /// However, if you want to allow other options, add an option configuration of which
     /// `store_key` or the first element of `names` is "*".
     ///
     /// The ownership of the vector of option configurations which is passed as an argument of
