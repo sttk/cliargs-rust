@@ -22,7 +22,7 @@ struct Block {
     indent: usize,
     margin_left: usize,
     margin_right: usize,
-    bodys: Vec<(usize, String)>, // The vector of tuples of (first indent, text)
+    bodies: Vec<(usize, String)>, // The vector of tuples of (first indent, text)
 
     _spaces: String,
 }
@@ -94,7 +94,7 @@ impl Help {
             indent: indent,
             margin_left: margin_left,
             margin_right: margin_right,
-            bodys: vec![(0, text)],
+            bodies: vec![(0, text)],
             _spaces: " ".repeat(max_len),
         };
         self.blocks.push(block);
@@ -153,7 +153,7 @@ impl Help {
             indent: indent,
             margin_left: margin_left,
             margin_right: margin_right,
-            bodys: texts.into_iter().map(|s| (0, s)).collect(),
+            bodies: texts.into_iter().map(|s| (0, s)).collect(),
             _spaces: " ".repeat(max_len),
         };
         self.blocks.push(block);
@@ -208,10 +208,10 @@ impl Help {
         margin_right: usize,
     ) {
         let mut indent = indent;
-        let bodys = opts::create_opts_help(cfgs, &mut indent);
+        let bodies = opts::create_opts_help(cfgs, &mut indent);
 
         let mut max_len = 0;
-        for (i, _) in &bodys {
+        for (i, _) in &bodies {
             max_len = cmp::max(max_len, *i);
         }
 
@@ -223,7 +223,7 @@ impl Help {
             indent: indent,
             margin_left: margin_left,
             margin_right: margin_right,
-            bodys: bodys,
+            bodies: bodies,
             _spaces: " ".repeat(max_len),
         };
         self.blocks.push(block);
@@ -267,7 +267,7 @@ pub struct HelpIter<'a> {
 }
 
 struct BlockIter<'a> {
-    bodys: &'a [(usize, String)],
+    bodies: &'a [(usize, String)],
     index: usize,
     indent: &'a str,
     margin: &'a str,
@@ -295,14 +295,14 @@ impl Iterator for HelpIter<'_> {
 impl<'a> BlockIter<'a> {
     fn new(block: &'a Block, line_width: usize) -> Self {
         let print_width = line_width - block.margin_left - block.margin_right;
-        if block.bodys.is_empty() || print_width <= block.indent {
+        if block.bodies.is_empty() || print_width <= block.indent {
             return Self::empty();
         }
-        let (indent, text) = &block.bodys[0];
+        let (indent, text) = &block.bodies[0];
         let mut line_iter = linebreak::LineIter::new(&text, print_width);
         line_iter.set_indent(&block._spaces[0..(*indent)]);
         Self {
-            bodys: &block.bodys,
+            bodies: &block.bodies,
             index: 0,
             indent: &(&block._spaces)[0..block.indent],
             margin: &(&block._spaces)[0..block.margin_left],
@@ -312,7 +312,7 @@ impl<'a> BlockIter<'a> {
 
     fn empty() -> Self {
         Self {
-            bodys: &[] as &'a [(usize, String)],
+            bodies: &[] as &'a [(usize, String)],
             index: 0,
             indent: "",
             margin: "",
@@ -325,7 +325,7 @@ impl<'a> Iterator for BlockIter<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<String> {
-        if self.bodys.is_empty() {
+        if self.bodies.is_empty() {
             return None;
         }
 
@@ -337,11 +337,11 @@ impl<'a> Iterator for BlockIter<'a> {
             }
 
             self.index += 1;
-            if self.index >= self.bodys.len() {
+            if self.index >= self.bodies.len() {
                 break;
             }
 
-            let (indent, text) = &self.bodys[self.index];
+            let (indent, text) = &self.bodies[self.index];
             self.line_iter.init(&text);
             self.line_iter.set_indent(&self.indent[0..(*indent)]);
         }
