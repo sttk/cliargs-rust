@@ -924,7 +924,11 @@ mod tests_of_make_opt_cfgs_for {
             #[opt(cfg = "f64=7.89", desc = "The description of f64_val", arg = "<n>")]
             f64_val: f64,
 
-            #[opt(cfg = "ss=[A,B,C]", desc = "The description of s_arr", arg = "<s>")]
+            #[opt(
+                cfg = "ss=/[A,a/B,b/C,c]",
+                desc = "The description of s_arr",
+                arg = "<s>"
+            )]
             s_arr: Vec<String>,
 
             #[opt(cfg = "ii8=[-1,2,-3]", desc = "The description of i8_arr", arg = "<n>")]
@@ -1050,7 +1054,7 @@ mod tests_of_make_opt_cfgs_for {
             assert_eq!(store.f64_val, 7.89);
             assert_eq!(
                 store.s_arr,
-                vec!["A".to_string(), "B".to_string(), "C".to_string()]
+                vec!["A,a".to_string(), "B,b".to_string(), "C,c".to_string()]
             );
             assert_eq!(store.i8_arr, vec![-1, 2, -3]);
             assert_eq!(store.i16_arr, vec![2, -3, 4]);
@@ -1218,7 +1222,11 @@ mod tests_of_make_opt_cfgs_for {
             assert_eq!(cfg.is_array, true);
             assert_eq!(
                 cfg.defaults,
-                Some(vec!["A".to_string(), "B".to_string(), "C".to_string()])
+                Some(vec![
+                    "A,a".to_string(),
+                    "B,b".to_string(),
+                    "C,c".to_string()
+                ])
             );
             assert_eq!(cfg.desc, "The description of s_arr".to_string());
             assert_eq!(cfg.arg_in_help, "<s>".to_string());

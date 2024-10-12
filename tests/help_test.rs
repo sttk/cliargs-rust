@@ -23,7 +23,6 @@ mod tests_of_print_help {
                     store_key("fail"),
                     names(&["f", "fail"]),
                     desc("Fail fast with no output on HTTP errors"),
-                    arg_in_help("<data>"),
                 ]),
                 cliargs::OptCfg::with([
                     store_key("help"),
