@@ -19,7 +19,7 @@ In `Cargo.toml`, write this crate as a dependency.
 
 ```toml
 [dependencies]
-cliargs = "0.5.2"
+cliargs = "0.6.0"
 ```
 
 ## Usage
@@ -301,7 +301,7 @@ See the file LICENSE in this distribution for more details.
 
 
 [repo-url]: https://github.com/sttk/cliargs-rust
-[crateio-img]: https://img.shields.io/badge/crate.io-ver.0.5.2-fc8d62?logo=rust
+[crateio-img]: https://img.shields.io/badge/crate.io-ver.0.6.0-fc8d62?logo=rust
 [crateio-url]: https://crates.io/crates/cliargs
 [docrs-img]: https://img.shields.io/badge/doc.rs-cliargs-66c2a5?logo=docs.rs
 [docrs-url]: https://docs.rs/cliargs
