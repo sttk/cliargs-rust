@@ -352,6 +352,7 @@ pub struct Cmd<'a> {
     args: Vec<&'a str>,
     opts: HashMap<&'a str, Vec<&'a str>>,
     cfgs: Vec<OptCfg>,
+    is_after_end_opt: bool,
 
     _leaked_strs: Vec<&'a str>,
     _num_of_args: usize,
@@ -457,6 +458,7 @@ impl<'b, 'a> Cmd<'a> {
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
+            is_after_end_opt: false,
             _leaked_strs,
             _num_of_args,
         })
@@ -496,12 +498,13 @@ impl<'b, 'a> Cmd<'a> {
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
+            is_after_end_opt: false,
             _leaked_strs,
             _num_of_args,
         }
     }
 
-    fn sub_cmd(&'a self, from_index: usize) -> Cmd<'b> {
+    fn sub_cmd(&'a self, from_index: usize, is_after_end_opt: bool) -> Cmd<'b> {
         let arg_iter = self._leaked_strs[from_index..(self._num_of_args)].into_iter();
         let (size, _) = arg_iter.size_hint();
         let mut _leaked_strs = Vec::with_capacity(size);
@@ -518,6 +521,7 @@ impl<'b, 'a> Cmd<'a> {
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
+            is_after_end_opt: is_after_end_opt,
             _leaked_strs,
             _num_of_args,
         }

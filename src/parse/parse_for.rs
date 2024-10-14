@@ -1909,4 +1909,92 @@ mod tests_of_parse_util_sub_cmd_for {
 
         assert_eq!(my_options.foo, false);
     }
+
+    #[test]
+    fn should_parse_with_end_opt_mark() {
+        let mut my_options = MyOptions::with_defaults();
+        let mut sub_options = SubOptions::with_defaults();
+
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "--".to_string(),
+            "bar".to_string(),
+            "-@".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd_for(&mut my_options) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("foo"), true);
+                assert_eq!(cmd.opt_arg("foo"), None);
+                assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+                assert_eq!(cmd.has_opt("bar"), false);
+                assert_eq!(cmd.opt_arg("bar"), None);
+                assert_eq!(cmd.opt_args("bar"), None);
+
+                match sub_cmd.parse_for(&mut sub_options) {
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "sub");
+                        assert_eq!(sub_cmd.args(), &["bar", "-@"] as &[&str]);
+                        assert_eq!(sub_cmd.has_opt("foo"), false);
+                        assert_eq!(sub_cmd.opt_arg("foo"), None);
+                        assert_eq!(sub_cmd.opt_args("foo"), None);
+                        assert_eq!(sub_cmd.has_opt("bar"), false);
+                        assert_eq!(sub_cmd.opt_arg("bar"), None);
+                        assert_eq!(sub_cmd.opt_args("bar"), None);
+                    }
+                    Err(_) => assert!(false),
+                }
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn should_parse_after_end_opt_mark() {
+        let mut my_options = MyOptions::with_defaults();
+        let mut sub_options = SubOptions::with_defaults();
+
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "bar".to_string(),
+            "-@".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd_for(&mut my_options) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("foo"), false);
+                assert_eq!(cmd.opt_arg("foo"), None);
+                assert_eq!(cmd.opt_args("foo"), None);
+                assert_eq!(cmd.has_opt("bar"), false);
+                assert_eq!(cmd.opt_arg("bar"), None);
+                assert_eq!(cmd.opt_args("bar"), None);
+
+                match sub_cmd.parse_for(&mut sub_options) {
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "--foo");
+                        assert_eq!(sub_cmd.args(), &["sub", "bar", "-@"] as &[&str]);
+                        assert_eq!(sub_cmd.has_opt("foo"), false);
+                        assert_eq!(sub_cmd.opt_arg("foo"), None);
+                        assert_eq!(sub_cmd.opt_args("foo"), None);
+                        assert_eq!(sub_cmd.has_opt("bar"), false);
+                        assert_eq!(sub_cmd.opt_arg("bar"), None);
+                        assert_eq!(sub_cmd.opt_args("bar"), None);
+                    }
+                    Err(_) => assert!(false),
+                }
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
+    }
 }

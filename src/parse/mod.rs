@@ -17,13 +17,14 @@ fn parse_args<'a, F1, F2, F3>(
     mut collect_opts: F2,
     take_opt_args: F3,
     until_1st_arg: bool,
-) -> Result<Option<usize>, InvalidOption>
+    is_after_end_opt: bool,
+) -> Result<Option<(usize, bool)>, InvalidOption>
 where
     F1: FnMut(&'a str),
     F2: FnMut(&'a str, Option<&'a str>) -> Result<(), InvalidOption>,
     F3: Fn(&str) -> bool,
 {
-    let mut is_non_opt = false;
+    let mut is_non_opt = is_after_end_opt;
     let mut prev_opt_taking_args = "";
     let mut first_err: Option<InvalidOption> = None;
 
@@ -33,7 +34,7 @@ where
                 if let Some(err) = first_err {
                     return Err(err);
                 }
-                return Ok(Some(i_arg));
+                return Ok(Some((i_arg, is_non_opt)));
             }
             collect_args(arg);
         } else if !prev_opt_taking_args.is_empty() {
@@ -114,7 +115,7 @@ where
                     if let Some(err) = first_err {
                         return Err(err);
                     }
-                    return Ok(Some(i_arg));
+                    return Ok(Some((i_arg, is_non_opt)));
                 }
                 collect_args(arg);
                 continue 'L0;
@@ -183,7 +184,7 @@ where
                 if let Some(err) = first_err {
                     return Err(err);
                 }
-                return Ok(Some(i_arg));
+                return Ok(Some((i_arg, is_non_opt)));
             }
             collect_args(arg);
         }

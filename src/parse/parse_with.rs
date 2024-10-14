@@ -71,7 +71,7 @@ impl<'b, 'a> Cmd<'a> {
     /// }
     /// ```
     pub fn parse_with(&mut self, opt_cfgs: Vec<OptCfg>) -> Result<(), InvalidOption> {
-        let result = self.parse_args_with(&opt_cfgs, false);
+        let result = self.parse_args_with(&opt_cfgs, false, self.is_after_end_opt);
         self.cfgs = opt_cfgs;
         result?;
         Ok(())
@@ -134,10 +134,10 @@ impl<'b, 'a> Cmd<'a> {
         &mut self,
         opt_cfgs: Vec<OptCfg>,
     ) -> Result<Option<Cmd<'b>>, InvalidOption> {
-        match self.parse_args_with(&opt_cfgs, true) {
-            Ok(Some(idx)) => {
+        match self.parse_args_with(&opt_cfgs, true, self.is_after_end_opt) {
+            Ok(Some((idx, is_after_end_opt))) => {
                 self.cfgs = opt_cfgs;
-                return Ok(Some(self.sub_cmd(idx)));
+                return Ok(Some(self.sub_cmd(idx, is_after_end_opt)));
             }
             Ok(None) => {
                 self.cfgs = opt_cfgs;
@@ -154,12 +154,13 @@ impl<'b, 'a> Cmd<'a> {
         &mut self,
         opt_cfgs: &Vec<OptCfg>,
         until_1st_arg: bool,
-    ) -> Result<Option<usize>, InvalidOption> {
+        is_after_end_opt: bool,
+    ) -> Result<Option<(usize, bool)>, InvalidOption> {
         let mut cfg_map = HashMap::<&str, usize>::new();
         let mut opt_map = HashMap::<&str, ()>::new();
 
         const ANY_OPT: &str = "*";
-        let mut has_any_opt = false;
+        let mut has_any_opt = is_after_end_opt;
 
         for (i, cfg) in opt_cfgs.iter().enumerate() {
             let names: Vec<&String> = cfg.names.iter().filter(|nm| !nm.is_empty()).collect();
@@ -328,6 +329,7 @@ impl<'b, 'a> Cmd<'a> {
             collect_opts,
             take_opt_args,
             until_1st_arg,
+            is_after_end_opt,
         );
 
         for str_ref in str_refs {
@@ -370,8 +372,8 @@ impl<'b, 'a> Cmd<'a> {
             }
         }
 
-        if let Some(idx) = result? {
-            return Ok(Some(idx + 1)); // +1, because _parse_args parses from 1
+        if let Some((idx, is_after_end_opt)) = result? {
+            return Ok(Some((idx + 1, is_after_end_opt))); // +1, because _parse_args parses from 1
         }
 
         Ok(None)
@@ -2259,5 +2261,93 @@ mod tests_of_parse_util_sub_cmd_with {
         assert_eq!(cmd.cfgs[0].defaults, None);
         assert_eq!(cmd.cfgs[0].desc, "".to_string());
         assert_eq!(cmd.cfgs[0].arg_in_help, "".to_string());
+    }
+
+    #[test]
+    fn should_parse_with_end_opt_mark() {
+        let opt_cfgs0 = vec![OptCfg::with([names(&["foo"])])];
+        let opt_cfgs1 = vec![OptCfg::with([names(&["bar"])])];
+
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "--".to_string(),
+            "bar".to_string(),
+            "-@".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd_with(opt_cfgs0) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("foo"), true);
+                assert_eq!(cmd.opt_arg("foo"), None);
+                assert_eq!(cmd.opt_args("foo"), Some(&[] as &[&str]));
+                assert_eq!(cmd.has_opt("bar"), false);
+                assert_eq!(cmd.opt_arg("bar"), None);
+                assert_eq!(cmd.opt_args("bar"), None);
+
+                match sub_cmd.parse_with(opt_cfgs1) {
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "sub");
+                        assert_eq!(sub_cmd.args(), &["bar", "-@"] as &[&str]);
+                        assert_eq!(sub_cmd.has_opt("foo"), false);
+                        assert_eq!(sub_cmd.opt_arg("foo"), None);
+                        assert_eq!(sub_cmd.opt_args("foo"), None);
+                        assert_eq!(sub_cmd.has_opt("bar"), false);
+                        assert_eq!(sub_cmd.opt_arg("bar"), None);
+                        assert_eq!(sub_cmd.opt_args("bar"), None);
+                    }
+                    Err(_) => assert!(false),
+                }
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn should_parse_after_end_opt_mark() {
+        let opt_cfgs0 = vec![OptCfg::with([names(&["foo"])])];
+        let opt_cfgs1 = vec![OptCfg::with([names(&["bar"])])];
+
+        let mut cmd = Cmd::with_strings([
+            "app".to_string(),
+            "--".to_string(),
+            "--foo".to_string(),
+            "sub".to_string(),
+            "bar".to_string(),
+            "-@".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd_with(opt_cfgs0) {
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("foo"), false);
+                assert_eq!(cmd.opt_arg("foo"), None);
+                assert_eq!(cmd.opt_args("foo"), None);
+                assert_eq!(cmd.has_opt("bar"), false);
+                assert_eq!(cmd.opt_arg("bar"), None);
+                assert_eq!(cmd.opt_args("bar"), None);
+
+                match sub_cmd.parse_with(opt_cfgs1) {
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "--foo");
+                        assert_eq!(sub_cmd.args(), &["sub", "bar", "-@"] as &[&str]);
+                        assert_eq!(sub_cmd.has_opt("foo"), false);
+                        assert_eq!(sub_cmd.opt_arg("foo"), None);
+                        assert_eq!(sub_cmd.opt_args("foo"), None);
+                        assert_eq!(sub_cmd.has_opt("bar"), false);
+                        assert_eq!(sub_cmd.opt_arg("bar"), None);
+                        assert_eq!(sub_cmd.opt_args("bar"), None);
+                    }
+                    Err(_) => assert!(false),
+                }
+            }
+            Ok(None) => assert!(false),
+            Err(_) => assert!(false),
+        }
     }
 }
