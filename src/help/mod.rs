@@ -970,7 +970,7 @@ mod tests_of_help {
     }
 
     #[test]
-    fn add_opts_with_margins_both_of_new_method_and_add_text_with_margins() {
+    fn add_opts_with_margins_by_constructor_and_add_text_with_margins() {
         use crate::OptCfgParam::*;
 
         let cols = linebreak::term_cols();
@@ -1160,14 +1160,17 @@ mod tests_of_help {
 
         let mut help = Help::new();
         help.add_opts(&[
-            OptCfg::with([names(&["foo-bar"]), desc("description")]),
-            OptCfg::with([names(&["*"]), desc("any option")]),
+            OptCfg::with([store_key("foo"), desc("description")]),
+            OptCfg::with([store_key("bar"), names(&["", ""]), desc("description")]),
         ]);
 
         let mut iter = help.iter();
 
         let line = iter.next();
-        assert_eq!(line, Some("--foo-bar  description".to_string()));
+        assert_eq!(line, Some("--foo          description".to_string()));
+
+        let line = iter.next();
+        assert_eq!(line, Some("        --bar  description".to_string()));
 
         let line = iter.next();
         assert_eq!(line, None);
@@ -1212,7 +1215,7 @@ mod tests_of_help {
     }
 
     #[test]
-    fn add_text_with_indent_if_indent_is_longer_than_line_width() {
+    fn add_opts_with_indent_if_indent_is_longer_than_line_width() {
         use crate::OptCfgParam::*;
 
         let cols = linebreak::term_cols();
@@ -1236,7 +1239,7 @@ mod tests_of_help {
     }
 
     #[test]
-    fn add_text_with_margins_if_sum_of_margins_are_equal_to_line_width() {
+    fn add_opts_with_margins_if_sum_of_margins_are_equal_to_line_width() {
         use crate::OptCfgParam::*;
 
         let cols = linebreak::term_cols();
