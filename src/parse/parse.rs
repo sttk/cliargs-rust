@@ -59,6 +59,7 @@ impl<'b, 'a> Cmd<'a> {
                 collect_opts,
                 take_opt_args,
                 false,
+                self.is_after_end_opt,
             ) {
                 Ok(_) => {}
                 Err(err) => return Err(err),
@@ -112,14 +113,15 @@ impl<'b, 'a> Cmd<'a> {
         let take_opt_args = |_arg: &str| false;
 
         if self._num_of_args > 0 {
-            if let Some(idx) = parse_args(
+            if let Some((idx, is_after_end_opt)) = parse_args(
                 &self._leaked_strs[1..(self._num_of_args)],
                 collect_args,
                 collect_opts,
                 take_opt_args,
                 true,
+                self.is_after_end_opt,
             )? {
-                return Ok(Some(self.sub_cmd(idx + 1))); // +1, because parse_args parses from 1.
+                return Ok(Some(self.sub_cmd(idx + 1, is_after_end_opt))); // +1, because parse_args parses from 1.
             }
         }
 
@@ -822,5 +824,191 @@ mod tests_of_parse_until_sub_cmd {
             assert_eq!(sub_cmd.args(), &["qux"]);
             assert_eq!(sub_cmd.has_opt("baz"), true);
         }
+    }
+
+    #[test]
+    fn should_parse_single_hyphen() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "-a".to_string(),
+            "-".to_string(),
+            "b".to_string(),
+            "-".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd() {
+            Ok(None) => assert!(false),
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("a"), true);
+
+                match sub_cmd.parse() {
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "-");
+                        assert_eq!(sub_cmd.args(), &["b", "-"]);
+                        assert_eq!(sub_cmd.has_opt("a"), false);
+                    }
+                    Err(_) => assert!(false),
+                }
+            }
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn should_parse_single_hyphen_but_error() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "-a".to_string(),
+            "-@".to_string(),
+            "-".to_string(),
+            "b".to_string(),
+            "-".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd() {
+            Ok(_) => assert!(false),
+            Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+                assert_eq!(option, "@");
+            }
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
+        assert_eq!(cmd.has_opt("a"), true);
+    }
+
+    #[test]
+    fn should_parse_with_end_opt_mark() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "sub".to_string(),
+            "--".to_string(),
+            "-a".to_string(),
+            "-s@".to_string(),
+            "--".to_string(),
+            "xxx".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd() {
+            Ok(None) => assert!(false),
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("a"), false);
+                assert_eq!(cmd.opt_arg("a"), None);
+                assert_eq!(cmd.opt_args("a"), None);
+                assert_eq!(cmd.has_opt("alphabet"), false);
+                assert_eq!(cmd.opt_arg("alphabet"), None);
+                assert_eq!(cmd.opt_args("alphabet"), None);
+                assert_eq!(cmd.has_opt("s"), false);
+                assert_eq!(cmd.opt_arg("s"), None);
+                assert_eq!(cmd.opt_args("s"), None);
+                assert_eq!(cmd.has_opt("silent"), false);
+                assert_eq!(cmd.opt_arg("silent"), None);
+                assert_eq!(cmd.opt_args("silent"), None);
+
+                match sub_cmd.parse() {
+                    Err(_) => assert!(false),
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "sub");
+                        assert_eq!(sub_cmd.args(), &["-a", "-s@", "--", "xxx"]);
+                        assert_eq!(sub_cmd.has_opt("a"), false);
+                        assert_eq!(sub_cmd.opt_arg("a"), None);
+                        assert_eq!(sub_cmd.opt_args("a"), None);
+                        assert_eq!(sub_cmd.has_opt("alphabet"), false);
+                        assert_eq!(sub_cmd.opt_arg("alphabet"), None);
+                        assert_eq!(sub_cmd.opt_args("alphabet"), None);
+                        assert_eq!(sub_cmd.has_opt("s"), false);
+                        assert_eq!(sub_cmd.opt_arg("s"), None);
+                        assert_eq!(sub_cmd.opt_args("s"), None);
+                        assert_eq!(sub_cmd.has_opt("silent"), false);
+                        assert_eq!(sub_cmd.opt_arg("silent"), None);
+                        assert_eq!(sub_cmd.opt_args("silent"), None);
+                    }
+                }
+            }
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn should_parse_after_end_opt_mark() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "-s".to_string(),
+            "--".to_string(),
+            "-a".to_string(),
+            "-s@".to_string(),
+            "--".to_string(),
+            "xxx".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd() {
+            Ok(None) => assert!(false),
+            Ok(Some(mut sub_cmd)) => {
+                assert_eq!(cmd.name(), "app");
+                assert_eq!(cmd.args(), &[] as &[&str]);
+                assert_eq!(cmd.has_opt("a"), false);
+                assert_eq!(cmd.opt_arg("a"), None);
+                assert_eq!(cmd.opt_args("a"), None);
+                assert_eq!(cmd.has_opt("alphabet"), false);
+                assert_eq!(cmd.opt_arg("alphabet"), None);
+                assert_eq!(cmd.opt_args("alphabet"), None);
+                assert_eq!(cmd.has_opt("s"), true);
+                assert_eq!(cmd.opt_arg("s"), None);
+                assert_eq!(cmd.opt_args("s"), Some(&[] as &[&str]));
+                assert_eq!(cmd.has_opt("silent"), false);
+                assert_eq!(cmd.opt_arg("silent"), None);
+                assert_eq!(cmd.opt_args("silent"), None);
+
+                match sub_cmd.parse() {
+                    Err(_) => assert!(false),
+                    Ok(_) => {
+                        assert_eq!(sub_cmd.name(), "-a");
+                        assert_eq!(sub_cmd.args(), &["-s@", "--", "xxx"]);
+                        assert_eq!(sub_cmd.has_opt("a"), false);
+                        assert_eq!(sub_cmd.opt_arg("a"), None);
+                        assert_eq!(sub_cmd.opt_args("a"), None);
+                        assert_eq!(sub_cmd.has_opt("alphabet"), false);
+                        assert_eq!(sub_cmd.opt_arg("alphabet"), None);
+                        assert_eq!(sub_cmd.opt_args("alphabet"), None);
+                        assert_eq!(sub_cmd.has_opt("s"), false);
+                        assert_eq!(sub_cmd.opt_arg("s"), None);
+                        assert_eq!(sub_cmd.opt_args("s"), None);
+                        assert_eq!(sub_cmd.has_opt("silent"), false);
+                        assert_eq!(sub_cmd.opt_arg("silent"), None);
+                        assert_eq!(sub_cmd.opt_args("silent"), None);
+                    }
+                }
+            }
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn should_parse_after_end_opt_mark_but_error() {
+        let mut cmd = Cmd::with_strings([
+            "/path/to/app".to_string(),
+            "-@".to_string(),
+            "--".to_string(),
+            "-a".to_string(),
+            "-s@".to_string(),
+            "--".to_string(),
+            "xxx".to_string(),
+        ]);
+
+        match cmd.parse_until_sub_cmd() {
+            Ok(_) => assert!(false),
+            Err(InvalidOption::OptionContainsInvalidChar { option }) => {
+                assert_eq!(option, "@");
+            }
+            Err(_) => assert!(false),
+        }
+
+        assert_eq!(cmd.name(), "app");
+        assert_eq!(cmd.args(), &[] as &[&str]);
     }
 }
