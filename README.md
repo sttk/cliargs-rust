@@ -1,4 +1,4 @@
-# [cliargs-rust][repo-url] [![crate.io][crateio-img]][crateio-url] [![doc.rs][docrs-img]][docrs-url] [![CI Status][ci-img]][ci-url] [![MIT License][mit-img]][mit-url]
+# [cliargs][repo-url] [![crates.io][cratesio-img]][cratesio-url] [![doc.rs][docrs-img]][docrs-url] [![CI Status][ci-img]][ci-url] [![MIT License][mit-img]][mit-url]
 
 A library to parse command line arguments and print the help for Rust application.
 
@@ -281,32 +281,34 @@ match cmd.parse_until_sub_cmd() {
 
 ## Supporting Rust versions
 
-This crate supports Rust 1.74.1 or later.
+This crate supports Rust 1.81.0 or later.
 
 ```sh
-% cargo msrv --no-check-feedback
-Fetching index
-Determining the Minimum Supported Rust Version (MSRV) for toolchain x86_64-apple-darwin
-Using check command cargo check
-   Finished The MSRV is: 1.74.1   ████████████████████████████████████████████ 00:00:04
+% cargo msrv find
+  [Meta]   cargo-msrv 0.18.4
+        ~~~~~~(omission)~~~~~
+Result:
+   Considered (min … max):   Rust 1.56.1 … Rust 1.89.0
+   Search method:            bisect
+   MSRV:                     1.81.0
+   Target:                   x86_64-apple-darwin
 ```
-
 
 ## License
 
-Copyright (C) 2024 Takayuki Sato
+Copyright (C) 2024-2025 Takayuki Sato
 
 This program is free software under MIT License.<br>
 See the file LICENSE in this distribution for more details.
 
 
 [repo-url]: https://github.com/sttk/cliargs-rust
-[crateio-img]: https://img.shields.io/badge/crate.io-ver.0.6.0-fc8d62?logo=rust
-[crateio-url]: https://crates.io/crates/cliargs
+[cratesio-img]: https://img.shields.io/badge/crates.io-ver.0.6.0-fc8d62?logo=rust
+[cratesio-url]: https://crates.io/crates/cliargs
 [docrs-img]: https://img.shields.io/badge/doc.rs-cliargs-66c2a5?logo=docs.rs
 [docrs-url]: https://docs.rs/cliargs
 [ci-img]: https://github.com/sttk/cliargs-rust/actions/workflows/rust.yml/badge.svg?branch=main
-[ci-url]: https://github.com/sttk/cliargs-rust/actions
+[ci-url]: https://github.com/sttk/cliargs-rust/actions?query=branch%3Amain
 [mit-img]: https://img.shields.io/badge/license-MIT-green.svg
 [mit-url]: https://opensource.org/licenses/MIT
 
