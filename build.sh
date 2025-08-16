@@ -52,8 +52,8 @@ doc() {
 }
 
 msrv() {
-  cargo update
-  cargo msrv find
+  cargo msrv find --ignore-lockfile --no-check-feedback
+  errcheck $?
 }
 
 if [[ "$#" == "0" ]]; then

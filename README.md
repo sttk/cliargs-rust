@@ -1,4 +1,4 @@
-# [cliargs][repo-url] [![crates.io][cratesio-img]][cratesio-url] [![doc.rs][docrs-img]][docrs-url] [![CI Status][ci-img]][ci-url] [![MIT License][mit-img]][mit-url]
+# [cliargs for Rust][repo-url] [![crates.io][cratesio-img]][cratesio-url] [![doc.rs][docrs-img]][docrs-url] [![CI Status][ci-img]][ci-url] [![MIT License][mit-img]][mit-url]
 
 A library to parse command line arguments and print the help for Rust application.
 
@@ -13,7 +13,7 @@ This library provides the following functionalities:
 - Supports parsing command line arguments including sub commands.
 - Generates help text from option configurations.
 
-## Install
+## Installation
 
 In `Cargo.toml`, write this crate as a dependency.
 
@@ -284,9 +284,24 @@ match cmd.parse_until_sub_cmd() {
 This crate supports Rust 1.81.0 or later.
 
 ```sh
-% cargo msrv find
+% ./build.sh msrv
   [Meta]   cargo-msrv 0.18.4
-        ~~~~~~(omission)~~~~~
+
+Compatibility Check #1: Rust 1.73.0
+  [FAIL]   Is incompatible
+
+Compatibility Check #2: Rust 1.81.0
+  [OK]     Is compatible
+
+Compatibility Check #3: Rust 1.77.2
+  [FAIL]   Is incompatible
+
+Compatibility Check #4: Rust 1.79.0
+  [FAIL]   Is incompatible
+
+Compatibility Check #5: Rust 1.80.1
+  [FAIL]   Is incompatible
+
 Result:
    Considered (min … max):   Rust 1.56.1 … Rust 1.89.0
    Search method:            bisect
