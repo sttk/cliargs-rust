@@ -20,6 +20,7 @@ linebreak = "0.3"
 
 [dev-dependencies]
 trybuild = "1.0"
+rustversion = "1.0"
 
 [workspace]
 members = ["cliargs_derive"]
