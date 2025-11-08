@@ -153,8 +153,16 @@ mod tests_of_errors {
     }
 }
 
+#[rustversion::since(1.91)]
 #[test]
 fn compile_error_check() {
     let t = trybuild::TestCases::new();
     t.compile_fail("tests/compile_errors/*.rs");
+}
+
+#[rustversion::before(1.91)]
+#[test]
+fn compile_error_check() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/compile_errors/less_than_1_90/*.rs");
 }
