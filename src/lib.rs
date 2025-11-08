@@ -477,7 +477,7 @@ impl<'b, 'a> Cmd<'a> {
 
         let cmd_name_start: usize;
 
-        if _leaked_strs.len() > 0 {
+        if !_leaked_strs.is_empty() {
             let path = path::Path::new(_leaked_strs[0]);
             let mut base_len = 0;
             if let Some(base_os) = path.file_name() {
@@ -505,7 +505,7 @@ impl<'b, 'a> Cmd<'a> {
     }
 
     fn sub_cmd(&'a self, from_index: usize, is_after_end_opt: bool) -> Cmd<'b> {
-        let arg_iter = self._leaked_strs[from_index..(self._num_of_args)].into_iter();
+        let arg_iter = self._leaked_strs[from_index..(self._num_of_args)].iter();
         let (size, _) = arg_iter.size_hint();
         let mut _leaked_strs = Vec::with_capacity(size);
 
@@ -517,11 +517,11 @@ impl<'b, 'a> Cmd<'a> {
         let _num_of_args = _leaked_strs.len();
 
         Cmd {
-            name: &_leaked_strs[0],
+            name: _leaked_strs[0],
             args: Vec::new(),
             opts: HashMap::new(),
             cfgs: Vec::new(),
-            is_after_end_opt: is_after_end_opt,
+            is_after_end_opt,
             _leaked_strs,
             _num_of_args,
         }
@@ -555,7 +555,7 @@ impl<'b, 'a> Cmd<'a> {
     /// of this method is [None].
     pub fn opt_arg(&'a self, name: &str) -> Option<&'a str> {
         if let Some(opt_vec) = self.opts.get(name) {
-            if opt_vec.len() > 0 {
+            if !opt_vec.is_empty() {
                 return Some(opt_vec[0]);
             }
         }
@@ -570,13 +570,13 @@ impl<'b, 'a> Cmd<'a> {
     /// of this method is [None].
     pub fn opt_args(&'a self, name: &str) -> Option<&'a [&'a str]> {
         match self.opts.get(name) {
-            Some(vec) => Some(&vec),
+            Some(vec) => Some(vec),
             None => None,
         }
     }
 
     /// Retrieves the option configurations which was used to parse command line arguments.
-    pub fn opt_cfgs(&'a self) -> &[OptCfg] {
+    pub fn opt_cfgs(&'a self) -> &'a [OptCfg] {
         &self.cfgs
     }
 }

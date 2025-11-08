@@ -17,10 +17,8 @@ fn delve_type(ty: &syn::Type) -> Option<(&syn::Ident, Option<&syn::Type>)> {
                 let composite_type = &seg.ident;
                 if let syn::PathArguments::AngleBracketed(args) = &seg.arguments {
                     if args.args.len() == 1 {
-                        if let Some(arg) = args.args.first() {
-                            if let syn::GenericArgument::Type(t) = arg {
-                                return Some((composite_type, Some(t)));
-                            }
+                        if let Some(syn::GenericArgument::Type(t)) = args.args.first() {
+                            return Some((composite_type, Some(t)));
                         }
                     }
                 }
@@ -36,10 +34,10 @@ fn delve_type(ty: &syn::Type) -> Option<(&syn::Ident, Option<&syn::Type>)> {
 //   - the second is the flag if stored in Vec<>.
 //   - the third is the flag if stored in Option<>..
 pub fn identify_field_type(ty: &syn::Type) -> Option<(&syn::Ident, bool, bool)> {
-    if let Some((ty_ident, child_type)) = delve_type(&ty) {
+    if let Some((ty_ident, child_type)) = delve_type(ty) {
         let field_type = ty_ident.to_string();
         if let Some(ty) = child_type {
-            if let Some((ty_ident, child_type)) = delve_type(&ty) {
+            if let Some((ty_ident, child_type)) = delve_type(ty) {
                 if child_type.is_none() {
                     if field_type == "Vec" {
                         return Some((ty_ident, true, false));
@@ -185,7 +183,7 @@ pub fn collect_impl_of_first_number(
         _ => {}
     }
 
-    return Err(OptStoreErr::InvalidNumberFormat(fld.to_string(), ty.to_string()).at(span));
+    Err(OptStoreErr::InvalidNumberFormat(fld.to_string(), ty.to_string()).at(span))
 }
 
 pub fn collect_impl_of_all_numbers(
@@ -322,7 +320,7 @@ pub fn collect_impl_of_all_numbers(
     }
 
     if is_err {
-        return Err(OptStoreErr::InvalidNumberFormat(fld.to_string(), ty.to_string()).at(span));
+        Err(OptStoreErr::InvalidNumberFormat(fld.to_string(), ty.to_string()).at(span))
     } else {
         Ok(quote::quote! { vec![#(#vec),*] })
     }

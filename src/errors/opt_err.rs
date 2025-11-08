@@ -114,18 +114,18 @@ pub enum InvalidOption {
 impl InvalidOption {
     /// Returns the name of the option that caused the error.
     pub fn option(&self) -> &str {
-        return match self {
-            InvalidOption::OptionContainsInvalidChar { option } => &option,
-            InvalidOption::UnconfiguredOption { option } => &option,
-            InvalidOption::OptionNeedsArg { option, .. } => &option,
-            InvalidOption::OptionTakesNoArg { option, .. } => &option,
-            InvalidOption::OptionIsNotArray { option, .. } => &option,
-            InvalidOption::StoreKeyIsDuplicated { name, .. } => &name,
-            InvalidOption::ConfigIsArrayButHasNoArg { name, .. } => &name,
-            InvalidOption::ConfigHasDefaultsButHasNoArg { name, .. } => &name,
-            InvalidOption::OptionNameIsDuplicated { name, .. } => &name,
-            InvalidOption::OptionArgIsInvalid { option, .. } => &option,
-        };
+        match self {
+            InvalidOption::OptionContainsInvalidChar { option } => option,
+            InvalidOption::UnconfiguredOption { option } => option,
+            InvalidOption::OptionNeedsArg { option, .. } => option,
+            InvalidOption::OptionTakesNoArg { option, .. } => option,
+            InvalidOption::OptionIsNotArray { option, .. } => option,
+            InvalidOption::StoreKeyIsDuplicated { name, .. } => name,
+            InvalidOption::ConfigIsArrayButHasNoArg { name, .. } => name,
+            InvalidOption::ConfigHasDefaultsButHasNoArg { name, .. } => name,
+            InvalidOption::OptionNameIsDuplicated { name, .. } => name,
+            InvalidOption::OptionArgIsInvalid { option, .. } => option,
+        }
     }
 }
 

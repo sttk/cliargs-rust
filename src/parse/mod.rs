@@ -2,7 +2,7 @@
 // This program is free software under MIT License.
 // See the file LICENSE in this distribution for more details.
 
-mod parse;
+mod parse_;
 mod parse_with;
 
 mod parse_for;
@@ -50,26 +50,22 @@ where
                     prev_opt_taking_args = "";
                 }
             }
-        } else if arg.starts_with("--") {
-            if arg.len() == 2 {
+        } else if let Some(arg) = arg.strip_prefix("--") {
+            if arg.is_empty() {
                 is_non_opt = true;
                 continue 'L0;
             }
 
-            let arg = &arg[2..];
             let mut i = 0;
 
             for ch in arg.chars() {
                 if i > 0 {
                     if ch == '=' {
-                        match collect_opts(&arg[0..i], Some(&arg[i + 1..])) {
-                            Err(err) => {
-                                if first_err.is_none() {
-                                    first_err = Some(err);
-                                }
-                                continue 'L0;
+                        if let Err(err) = collect_opts(&arg[0..i], Some(&arg[i + 1..])) {
+                            if first_err.is_none() {
+                                first_err = Some(err);
                             }
-                            Ok(_) => {}
+                            continue 'L0;
                         }
                         break;
                     }
@@ -81,15 +77,13 @@ where
                         }
                         continue 'L0;
                     }
-                } else {
-                    if !is_allowed_first_character(ch) {
-                        if first_err.is_none() {
-                            first_err = Some(InvalidOption::OptionContainsInvalidChar {
-                                option: String::from(arg),
-                            });
-                        }
-                        continue 'L0;
+                } else if !is_allowed_first_character(ch) {
+                    if first_err.is_none() {
+                        first_err = Some(InvalidOption::OptionContainsInvalidChar {
+                            option: String::from(arg),
+                        });
                     }
+                    continue 'L0;
                 }
                 i += 1;
             }
@@ -99,29 +93,25 @@ where
                     prev_opt_taking_args = arg;
                     continue 'L0;
                 }
-                match collect_opts(arg, None) {
-                    Err(err) => {
-                        if first_err.is_none() {
-                            first_err = Some(err);
-                        }
-                        continue 'L0;
+                if let Err(err) = collect_opts(arg, None) {
+                    if first_err.is_none() {
+                        first_err = Some(err);
                     }
-                    Ok(_) => {}
+                    continue 'L0;
                 }
             }
-        } else if arg.starts_with("-") {
-            if arg.len() == 1 {
+        } else if let Some(arg) = arg.strip_prefix("-") {
+            if arg.is_empty() {
                 if until_1st_arg {
                     if let Some(err) = first_err {
                         return Err(err);
                     }
                     return Ok(Some((i_arg, is_non_opt)));
                 }
-                collect_args(arg);
+                collect_args("-");
                 continue 'L0;
             }
 
-            let arg = &arg[1..];
             let mut name: &str = "";
             let mut i = 0;
 
@@ -129,25 +119,19 @@ where
                 if i > 0 {
                     if ch == '=' {
                         if !name.is_empty() {
-                            match collect_opts(name, Some(&arg[i + 1..])) {
-                                Err(err) => {
-                                    if first_err.is_none() {
-                                        first_err = Some(err);
-                                    }
+                            if let Err(err) = collect_opts(name, Some(&arg[i + 1..])) {
+                                if first_err.is_none() {
+                                    first_err = Some(err);
                                 }
-                                Ok(_) => {}
                             }
                         }
                         continue 'L0;
                     }
                     if !name.is_empty() {
-                        match collect_opts(name, None) {
-                            Err(err) => {
-                                if first_err.is_none() {
-                                    first_err = Some(err);
-                                }
+                        if let Err(err) = collect_opts(name, None) {
+                            if first_err.is_none() {
+                                first_err = Some(err);
                             }
-                            Ok(_) => {}
                         }
                     }
                 }
@@ -167,16 +151,11 @@ where
             if i == arg.len() && !name.is_empty() {
                 if take_opt_args(name) && i_arg < args.len() - 1 {
                     prev_opt_taking_args = name;
-                } else {
-                    match collect_opts(name, None) {
-                        Err(err) => {
-                            if first_err.is_none() {
-                                first_err = Some(err);
-                            }
-                            continue 'L0;
-                        }
-                        Ok(_) => {}
+                } else if let Err(err) = collect_opts(name, None) {
+                    if first_err.is_none() {
+                        first_err = Some(err);
                     }
+                    continue 'L0;
                 }
             }
         } else {

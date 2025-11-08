@@ -137,22 +137,22 @@ impl<'b, 'a> Cmd<'a> {
         match self.parse_args_with(&opt_cfgs, true, self.is_after_end_opt) {
             Ok(Some((idx, is_after_end_opt))) => {
                 self.cfgs = opt_cfgs;
-                return Ok(Some(self.sub_cmd(idx, is_after_end_opt)));
+                Ok(Some(self.sub_cmd(idx, is_after_end_opt)))
             }
             Ok(None) => {
                 self.cfgs = opt_cfgs;
-                return Ok(None);
+                Ok(None)
             }
             Err(err) => {
                 self.cfgs = opt_cfgs;
-                return Err(err);
+                Err(err)
             }
         }
     }
 
     fn parse_args_with(
         &mut self,
-        opt_cfgs: &Vec<OptCfg>,
+        opt_cfgs: &[OptCfg],
         until_1st_arg: bool,
         is_after_end_opt: bool,
     ) -> Result<Option<(usize, bool)>, InvalidOption> {
@@ -166,7 +166,7 @@ impl<'b, 'a> Cmd<'a> {
             let names: Vec<&String> = cfg.names.iter().filter(|nm| !nm.is_empty()).collect();
 
             let store_key: &str = if cfg.store_key.is_empty() && !names.is_empty() {
-                &names[0]
+                names[0]
             } else {
                 &cfg.store_key
             };
@@ -183,7 +183,7 @@ impl<'b, 'a> Cmd<'a> {
             let first_name = if names.is_empty() {
                 store_key
             } else {
-                &names[0]
+                names[0]
             };
 
             if opt_map.contains_key(store_key) {
@@ -249,12 +249,10 @@ impl<'b, 'a> Cmd<'a> {
 
                 let store_key: &str = if !cfg.store_key.is_empty() {
                     &cfg.store_key
+                } else if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                    name
                 } else {
-                    if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
-                        name
-                    } else {
-                        ""
-                    }
+                    ""
                 };
 
                 if let Some(arg) = arg_op {
@@ -266,13 +264,11 @@ impl<'b, 'a> Cmd<'a> {
                     }
 
                     if let Some(vec) = self.opts.get_mut(store_key) {
-                        if !vec.is_empty() {
-                            if !cfg.is_array {
-                                return Err(InvalidOption::OptionIsNotArray {
-                                    option: name.to_string(),
-                                    store_key: store_key.to_string(),
-                                });
-                            }
+                        if !vec.is_empty() && !cfg.is_array {
+                            return Err(InvalidOption::OptionIsNotArray {
+                                option: name.to_string(),
+                                store_key: store_key.to_string(),
+                            });
                         }
 
                         (cfg.validator)(store_key, name, arg)?;
@@ -293,7 +289,7 @@ impl<'b, 'a> Cmd<'a> {
                         });
                     }
 
-                    if let None = self.opts.get_mut(store_key) {
+                    if self.opts.get_mut(store_key).is_none() {
                         let string = String::from(store_key);
                         let str: &'a str = string.leak();
                         str_refs.push(str);
@@ -339,12 +335,10 @@ impl<'b, 'a> Cmd<'a> {
         for cfg in opt_cfgs.iter() {
             let store_key: &str = if !cfg.store_key.is_empty() {
                 &cfg.store_key
+            } else if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                name
             } else {
-                if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
-                    name
-                } else {
-                    ""
-                }
+                ""
             };
 
             if store_key.is_empty() {
@@ -355,12 +349,12 @@ impl<'b, 'a> Cmd<'a> {
                 continue;
             }
 
-            if let None = self.opts.get_mut(store_key) {
+            if self.opts.get_mut(store_key).is_none() {
                 if let Some(def_vec) = &cfg.defaults {
                     let string = String::from(store_key);
                     let key: &'a str = string.leak();
                     self._leaked_strs.push(key);
-                    let vec = self.opts.entry(key).or_insert(Vec::new());
+                    let vec = self.opts.entry(key).or_default();
 
                     for def_val in def_vec.iter() {
                         let string = String::from(def_val);
