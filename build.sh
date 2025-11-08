@@ -17,6 +17,11 @@ format() {
   errcheck $?
 }
 
+lint() {
+  cargo clippy
+  errcheck $?
+}
+
 compile() {
   cargo build
   errcheck $?
@@ -61,6 +66,7 @@ if [[ "$#" == "0" ]]; then
   format
   compile
   test
+  lint
   doc
   cover
 
@@ -81,6 +87,9 @@ else
       ;;
     test)
       test
+      ;;
+    lint)
+      lint
       ;;
     doc)
       doc
