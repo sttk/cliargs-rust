@@ -166,13 +166,13 @@ impl<'b> Cmd<'_> {
         match self.parse_until_sub_cmd_with(cfgs) {
             Ok(None) => {
                 opt_store.set_field_values(&self.opts)?;
-                return Ok(None);
+                Ok(None)
             }
             Ok(Some(sub_cmd)) => {
                 opt_store.set_field_values(&self.opts)?;
-                return Ok(Some(sub_cmd));
+                Ok(Some(sub_cmd))
             }
-            Err(err) => return Err(err),
+            Err(err) => Err(err),
         }
     }
 }

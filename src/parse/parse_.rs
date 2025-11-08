@@ -43,7 +43,7 @@ impl<'b, 'a> Cmd<'a> {
         };
 
         let collect_opts = |name, option| {
-            let vec = self.opts.entry(name).or_insert_with(|| Vec::new());
+            let vec = self.opts.entry(name).or_default();
             if let Some(arg) = option {
                 vec.push(arg);
             }
@@ -103,7 +103,7 @@ impl<'b, 'a> Cmd<'a> {
         let collect_args = |_arg| {};
 
         let collect_opts = |name, option| {
-            let vec = self.opts.entry(name).or_insert_with(|| Vec::new());
+            let vec = self.opts.entry(name).or_default();
             if let Some(arg) = option {
                 vec.push(arg);
             }

@@ -106,11 +106,7 @@ impl OptCfg {
             names: _names.iter().map(|s| s.to_string()).collect(),
             has_arg: _has_arg,
             is_array: _is_array,
-            defaults: if let Some(sl) = _defaults {
-                Some(sl.iter().map(|s| s.to_string()).collect())
-            } else {
-                None
-            },
+            defaults: _defaults.map(|sl| sl.iter().map(|s| s.to_string()).collect()),
             desc: _desc.to_string(),
             arg_in_help: _arg_in_help.to_string(),
             validator: _validator,

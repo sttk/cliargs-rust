@@ -4,6 +4,7 @@
 
 use crate::OptCfg;
 
+#[allow(clippy::single_component_path_imports)]
 use linebreak;
 
 pub fn create_opts_help(cfgs: &[OptCfg], indent_ref: &mut usize) -> Vec<(usize, String)> {
@@ -16,12 +17,10 @@ pub fn create_opts_help(cfgs: &[OptCfg], indent_ref: &mut usize) -> Vec<(usize, 
         for cfg in cfgs {
             let store_key: &str = if !cfg.store_key.is_empty() {
                 &cfg.store_key
+            } else if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                name
             } else {
-                if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
-                    name
-                } else {
-                    ""
-                }
+                ""
             };
 
             if store_key.is_empty() {
@@ -38,7 +37,7 @@ pub fn create_opts_help(cfgs: &[OptCfg], indent_ref: &mut usize) -> Vec<(usize, 
 
             if !cfg.desc.is_empty() {
                 if width + 2 > indent {
-                    text.push_str("\n");
+                    text.push('\n');
                     text.push_str(&" ".repeat(indent));
                     text.push_str(&cfg.desc);
                 } else {
@@ -56,12 +55,10 @@ pub fn create_opts_help(cfgs: &[OptCfg], indent_ref: &mut usize) -> Vec<(usize, 
         for cfg in cfgs {
             let store_key: &str = if !cfg.store_key.is_empty() {
                 &cfg.store_key
+            } else if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                name
             } else {
-                if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
-                    name
-                } else {
-                    ""
-                }
+                ""
             };
 
             if store_key.is_empty() {
@@ -90,12 +87,10 @@ pub fn create_opts_help(cfgs: &[OptCfg], indent_ref: &mut usize) -> Vec<(usize, 
         for cfg in cfgs {
             let store_key: &str = if !cfg.store_key.is_empty() {
                 &cfg.store_key
+            } else if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
+                name
             } else {
-                if let Some(name) = cfg.names.iter().find(|nm| !nm.is_empty()) {
-                    name
-                } else {
-                    ""
-                }
+                ""
             };
 
             if store_key.is_empty() {
@@ -139,12 +134,12 @@ fn make_opt_title(cfg: &OptCfg) -> (usize, String) {
             }
             1 => {
                 if last_spaces > 0 {
-                    title.push_str(",");
+                    title.push(',');
                     title.push_str(&" ".repeat(last_spaces - 1));
                 }
                 last_spaces = 0;
-                title.push_str("-");
-                title.push_str(&name);
+                title.push('-');
+                title.push_str(name);
                 if i != n - 1 {
                     last_spaces += 2;
                 }
@@ -152,12 +147,12 @@ fn make_opt_title(cfg: &OptCfg) -> (usize, String) {
             }
             _ => {
                 if last_spaces > 0 {
-                    title.push_str(",");
+                    title.push(',');
                     title.push_str(&" ".repeat(last_spaces - 1));
                 }
                 last_spaces = 0;
                 title.push_str("--");
-                title.push_str(&name);
+                title.push_str(name);
                 if i != n - 1 {
                     last_spaces += 2;
                 }
@@ -171,15 +166,15 @@ fn make_opt_title(cfg: &OptCfg) -> (usize, String) {
             0 => {}
             1 => {
                 if last_spaces > 0 {
-                    title.push_str(",");
+                    title.push(',');
                     title.push_str(&" ".repeat(last_spaces - 1));
                 }
-                title.push_str("-");
+                title.push('-');
                 title.push_str(&cfg.store_key);
             }
             _ => {
                 if last_spaces > 0 {
-                    title.push_str(",");
+                    title.push(',');
                     title.push_str(&" ".repeat(last_spaces - 1));
                 }
                 title.push_str("--");
@@ -189,7 +184,7 @@ fn make_opt_title(cfg: &OptCfg) -> (usize, String) {
     }
 
     if !cfg.arg_in_help.is_empty() {
-        title.push_str(" ");
+        title.push(' ');
         title.push_str(&cfg.arg_in_help);
     }
 

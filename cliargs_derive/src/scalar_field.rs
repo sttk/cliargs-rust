@@ -7,6 +7,7 @@ use super::util::collect_impl_of_first_number;
 use super::util::parse_defaults;
 use std::collections::HashMap;
 
+#[allow(clippy::too_many_arguments)]
 pub fn collect_impl(
     field_name: &syn::Ident,
     type_ident: &syn::Ident,
@@ -41,7 +42,7 @@ fn for_bool(
     attr_span: Option<proc_macro2::Span>,
     _field_span: proc_macro2::Span,
 ) -> Result<(), syn::Error> {
-    if let Some(_) = attr_map.get("defaults") {
+    if attr_map.get("defaults").is_some() {
         let span = attr_span.unwrap();
         return Err(OptStoreErr::MustNotHasDefaults(field_name.to_string()).at(span));
     }
@@ -52,7 +53,7 @@ fn for_bool(
     let arg = attr_map.get("arg").or(Some(&empty));
     let store_key = field_name.to_string();
 
-    let names = attr_map.get("names").or(Some(&empty)).unwrap();
+    let names = attr_map.get("names").unwrap_or(&empty);
     let names: Vec<&str> = if names.is_empty() {
         Vec::<&str>::new()
     } else {
@@ -94,7 +95,7 @@ fn for_string(
     let arg = attr_map.get("arg").or(Some(&empty));
     let store_key = field_name.to_string();
 
-    let names = attr_map.get("names").or(Some(&empty)).unwrap();
+    let names = attr_map.get("names").unwrap_or(&empty);
     let names: Vec<&str> = if names.is_empty() {
         Vec::<&str>::new()
     } else {
@@ -141,6 +142,7 @@ fn for_string(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn for_number(
     field_name: &syn::Ident,
     field_type: &syn::Ident,
@@ -157,7 +159,7 @@ fn for_number(
     let arg = attr_map.get("arg").or(Some(&empty));
     let store_key = field_name.to_string();
 
-    let names = attr_map.get("names").or(Some(&empty)).unwrap();
+    let names = attr_map.get("names").unwrap_or(&empty);
     let names: Vec<&str> = if names.is_empty() {
         Vec::<&str>::new()
     } else {
@@ -179,7 +181,7 @@ fn for_number(
             default_vec = quote::quote! { Some(vec![#(#vec.to_string()),*]) };
         }
         None => {
-            let n = collect_impl_of_first_number(&vec![], field_name, field_type, field_span)?;
+            let n = collect_impl_of_first_number(&[], field_name, field_type, field_span)?;
             default_num = quote::quote! { #n };
             default_vec = quote::quote! { None };
         }

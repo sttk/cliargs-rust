@@ -6,7 +6,9 @@ mod opts;
 
 use crate::OptCfg;
 
+#[allow(clippy::single_component_path_imports)]
 use linebreak;
+
 use std::cmp;
 
 /// Holds help text blocks and help options blocks.
@@ -40,8 +42,8 @@ impl Help {
     /// Constructs an [Help] instance with left and right margins.
     pub fn with_margins(margin_left: usize, margin_right: usize) -> Self {
         Self {
-            margin_left: margin_left,
-            margin_right: margin_right,
+            margin_left,
+            margin_right,
             blocks: Vec::<Block>::with_capacity(2),
         }
     }
@@ -91,9 +93,9 @@ impl Help {
         let margin_right = self.margin_right + margin_right;
         let max_len = cmp::max(margin_left, indent);
         let block = Block {
-            indent: indent,
-            margin_left: margin_left,
-            margin_right: margin_right,
+            indent,
+            margin_left,
+            margin_right,
             bodies: vec![(0, text)],
             _spaces: " ".repeat(max_len),
         };
@@ -150,9 +152,9 @@ impl Help {
         let margin_right = self.margin_right + margin_right;
         let max_len = cmp::max(margin_left, indent);
         let block = Block {
-            indent: indent,
-            margin_left: margin_left,
-            margin_right: margin_right,
+            indent,
+            margin_left,
+            margin_right,
             bodies: texts.into_iter().map(|s| (0, s)).collect(),
             _spaces: " ".repeat(max_len),
         };
@@ -220,17 +222,17 @@ impl Help {
         let max_len = cmp::max(max_len, cmp::max(margin_left, indent));
 
         let block = Block {
-            indent: indent,
-            margin_left: margin_left,
-            margin_right: margin_right,
-            bodies: bodies,
+            indent,
+            margin_left,
+            margin_right,
+            bodies,
             _spaces: " ".repeat(max_len),
         };
         self.blocks.push(block);
     }
 
     /// Creates a [HelpIter] instance which is an iterator that outputs a help text line by line.
-    pub fn iter(&self) -> HelpIter {
+    pub fn iter(&self) -> HelpIter<'_> {
         if self.blocks.is_empty() {
             return HelpIter {
                 line_width: 0,
@@ -242,7 +244,7 @@ impl Help {
         let line_width = linebreak::term_cols();
 
         HelpIter {
-            line_width: line_width,
+            line_width,
             blocks: &self.blocks,
             block_iter: BlockIter::new(&self.blocks[0], line_width),
         }
@@ -250,8 +252,8 @@ impl Help {
 
     /// Outputs a help text to the standard output.
     pub fn print(&self) {
-        let mut iter = self.iter();
-        while let Some(line) = iter.next() {
+        let iter = self.iter();
+        for line in iter {
             println!("{}", line);
         }
     }
@@ -299,14 +301,14 @@ impl<'a> BlockIter<'a> {
             return Self::empty();
         }
         let (indent, text) = &block.bodies[0];
-        let mut line_iter = linebreak::LineIter::new(&text, print_width);
+        let mut line_iter = linebreak::LineIter::new(text, print_width);
         line_iter.set_indent(&block._spaces[0..(*indent)]);
         Self {
             bodies: &block.bodies,
             index: 0,
             indent: &(&block._spaces)[0..block.indent],
             margin: &(&block._spaces)[0..block.margin_left],
-            line_iter: line_iter,
+            line_iter,
         }
     }
 
@@ -332,7 +334,7 @@ impl<'a> Iterator for BlockIter<'a> {
         loop {
             if let Some(mut line) = self.line_iter.next() {
                 line.insert_str(0, self.margin);
-                self.line_iter.set_indent(&self.indent);
+                self.line_iter.set_indent(self.indent);
                 return Some(line);
             }
 
@@ -342,7 +344,7 @@ impl<'a> Iterator for BlockIter<'a> {
             }
 
             let (indent, text) = &self.bodies[self.index];
-            self.line_iter.init(&text);
+            self.line_iter.init(text);
             self.line_iter.set_indent(&self.indent[0..(*indent)]);
         }
 
