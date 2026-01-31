@@ -311,7 +311,7 @@ Result:
 
 ## License
 
-Copyright (C) 2024-2025 Takayuki Sato
+Copyright (C) 2024-2026 Takayuki Sato
 
 This program is free software under MIT License.<br>
 See the file LICENSE in this distribution for more details.
